@@ -1,0 +1,6 @@
+{
+  "name": "tanpura-drone",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test", "dev": "node server.js" }
+}
