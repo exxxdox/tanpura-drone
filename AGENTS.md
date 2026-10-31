@@ -1,6 +1,7 @@
 # Tanpura project conventions
 
 - Use pnpm. Vue UI lives in `src/App.vue` with the entry in `src/main.js`; Web Audio scheduling and cancellation live in `src/audio-engine.js`.
+- Styling uses Tailwind CSS v4 via `@tailwindcss/vite`: theme tokens, custom variants (`mobile`, `wide`, `short`) and unavoidable pseudo-element utilities live in `src/style.css`; component styles are utility classes in `src/App.vue`.
 - Preserve login-free entry, twelve keys, crossfade loops, volume control, keyboard access and reduced-motion support.
 - Each key uses its own full-length recording at playbackRate 1; keep the twelve files in `public/audio/` accurate.
 - Original downloads live in ignored `outputs/`; preserve the full 25-minute duration in `public/audio/`. Use media streaming, not full-file PCM decoding. Never shorten recordings without explicit approval.
