@@ -26,3 +26,31 @@
 .playing .equalizer i{height:10px;transform-origin:center;transform:scaleY(calc(.2 + var(--energy)*.8));transition:transform .12s}
 .playing .equalizer i:nth-child(2){height:14px}.playing .equalizer i:nth-child(3){height:7px}.playing .equalizer i:nth-child(4){height:12px}
 @media(prefers-reduced-motion:reduce){.resonance-halo,.resonance-wave{display:none}}
+
+/* 桌面按可视高度分配琴盘与控制区，避免 2K 屏幕缩放后固定间距撑出滚动条。 */
+@media(min-width:1000px) and (min-height:700px){
+  .app-shell{--gutter:clamp(32px,5vw,96px);height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto}
+  header{width:100%;max-width:1800px;margin-inline:auto;height:clamp(72px,8dvh,112px);padding-inline:var(--gutter)}
+  main{width:100%;max-width:1800px;min-height:0;margin:0 auto;padding:0 var(--gutter) clamp(18px,3dvh,40px);grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);grid-template-rows:minmax(0,1fr) auto;row-gap:clamp(16px,2.4dvh,32px)}
+  .intro,.instrument{min-width:0}
+  .intro h1{font-size:clamp(40px,min(4.5vw,7dvh),84px);margin-block:clamp(16px,2dvh,28px);line-height:1.4}
+  .intro-bottom{margin-top:clamp(16px,3dvh,40px)}
+  .orbit-scene{width:min(100%,740px,calc(100dvh - 440px))}
+  #pitch{font-size:clamp(72px,12dvh,132px)}
+  .controls{margin-top:0;min-width:0;padding:clamp(16px,2.2dvh,28px)}
+  .control-head{margin-bottom:clamp(12px,1.5dvh,20px)}
+  .keys{grid-template-columns:repeat(12,minmax(0,1fr))}
+  .key{height:clamp(48px,5dvh,64px)}
+  .volume{margin-block:clamp(14px,2dvh,24px)}
+  .volume input{min-width:0}
+  .control-foot{padding-top:12px}
+  footer{width:calc(100% - 2*var(--gutter));max-width:calc(1800px - 2*var(--gutter));margin:0 auto;padding:16px 0;min-height:48px;align-items:center}
+}
+/* 矮窗口优先保留调性、频率和播放按钮，移除重复的主音标签以避免重叠。 */
+@media(min-width:1000px) and (min-height:700px) and (max-height:850px){
+  .pitch-kicker{display:none}
+  .pitch-display{transform:translateY(-24px)}
+  #pitch{font-size:clamp(64px,10dvh,84px)}
+  .play{width:44px;height:44px;left:calc(50% - 22px)}
+  .intro p{font-size:13px}
+}
