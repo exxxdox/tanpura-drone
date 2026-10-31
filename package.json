@@ -2,19 +2,22 @@
   "name": "tanpura-drone",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5173",
-    "test": "node --test"
+    "test": "node --test \"tests/*.test.js\""
   },
   "dependencies": {
     "@vercel/analytics": "2.0.1",
     "@vercel/speed-insights": "2.0.0",
-    "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "vue": "3.5.44"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.10",
     "vite": "8.3.5"
   }
 }

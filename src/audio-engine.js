@@ -47,12 +47,16 @@ export class Drone {
         return false;
       }
       const previous = this.active;
+      // 复用仍在播放的同一调时不重新淡入，否则会先静音再回升，造成可听掉音。
+      const resuming = voice === previous;
       this.active = voice;
       this.running = true;
       const now = this.context.currentTime;
-      voice.gain.gain.cancelScheduledValues(now);
-      voice.gain.gain.setValueAtTime(0, now);
-      voice.gain.gain.linearRampToValueAtTime(1, now + .3);
+      if (!resuming) {
+        voice.gain.gain.cancelScheduledValues(now);
+        voice.gain.gain.setValueAtTime(0, now);
+        voice.gain.gain.linearRampToValueAtTime(1, now + .3);
+      }
       if (previous && previous !== voice) {
         // 新调准备好后才淡出旧调，等待网络时不会突然断音。
         const level = previous.gain.gain.value;

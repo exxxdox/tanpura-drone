@@ -18,7 +18,8 @@ function setup(t, pending = false) {
   };
   const nodes = [];
   // 不提供 cancelAndHoldAtTime，保持 Firefox/Zen 的兼容性回归条件。
-  const gain = () => ({ gain: { value: .4, cancelScheduledValues() {}, setValueAtTime() {}, linearRampToValueAtTime() {}, setTargetAtTime(value) { this.value = value; } }, connect() {}, disconnect() { this.disconnected = true; } });
+  // 记录淡入调度次数，用于断言复用播放时不重复淡入。
+  const gain = () => ({ gain: { value: .4, valueCalls: 0, rampCalls: 0, cancelScheduledValues() {}, setValueAtTime() { this.valueCalls++; }, linearRampToValueAtTime() { this.rampCalls++; }, setTargetAtTime(value) { this.value = value; } }, connect() {}, disconnect() { this.disconnected = true; } });
   const drone = new Drone();
   drone.context = {
     currentTime: 0, resume: async () => {}, close: async () => { drone.closed = true; },
@@ -56,6 +57,25 @@ test('暂停立即停止所有媒体，同调恢复保留播放位置', async t 
   assert.equal(audios[0].paused, false);
 });
 
+test('复用正在播放的同一调不重新淡入，避免音量骤降', async t => {
+  const { drone } = setup(t);
+  await drone.play(0);
+  const gain = drone.active.gain.gain;
+  const valueCalls = gain.valueCalls;
+  const rampCalls = gain.rampCalls;
+  assert.equal(await drone.play(0), true);
+  assert.equal(gain.valueCalls, valueCalls);
+  assert.equal(gain.rampCalls, rampCalls);
+});
+
+test('当前请求失败会释放播放器并抛出错误', async t => {
+  const { drone, audios } = setup(t, true);
+  const playing = drone.play(0);
+  audios[0].reject(new Error('boom'));
+  await assert.rejects(playing, /boom/);
+  assert.equal(drone.voices.size, 0);
+  assert.equal(drone.active, undefined);
+});
 test('暂停作废待加载播放，晚完成不会重新发声', async t => {
   const { drone, audios } = setup(t, true);
   const playing = drone.play(0);

@@ -1,6 +1,6 @@
 # Tanpura · 弦外之境
 
-无需登录的十二调 Tanpura 单页播放器，使用 React 和 Vite。源码位于 `src/`，静态资源位于 `public/`，`dist/` 为可重新生成的构建产物。
+无需登录的十二调 Tanpura 单页播放器，使用 Vue 和 Vite。源码位于 `src/`，静态资源位于 `public/`，`dist/` 为可重新生成的构建产物。
 
 开发：`pnpm dev`，然后打开终端显示的本地地址。
 
@@ -14,7 +14,7 @@
 
 Vercel 依据 `pnpm-lock.yaml` 识别 pnpm，并使用构建镜像自带的 pnpm 版本。`package.json` 因此不写 `packageManager`，避免触发 Vercel 的 Corepack 实验开关 `ENABLE_EXPERIMENTAL_COREPACK`。详见 [Vercel 包管理器说明](https://vercel.com/docs/package-managers)。
 
-`src/main.jsx` 已接入 `@vercel/analytics/react` 的 `Analytics` 和 `@vercel/speed-insights/react` 的 `SpeedInsights`。在 Vercel 项目控制台启用 Web Analytics，并检查 Speed Insights 已启用，然后部署。监测数据需部署后的真实访问才能验证；本地开发使用官方组件的开发模式。
+`src/main.js` 在入口调用 `@vercel/analytics` 的 `inject` 与 `@vercel/speed-insights` 的 `injectSpeedInsights` 各一次。在 Vercel 项目控制台启用 Web Analytics，并检查 Speed Insights 已启用，然后部署。监测数据需部署后的真实访问才能验证；本地预览时监测脚本请求返回 404 属预期。
 
 官方接入说明：[Web Analytics](https://vercel.com/docs/analytics/quickstart)、[Speed Insights](https://vercel.com/docs/speed-insights/quickstart)。
 
