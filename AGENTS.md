@@ -11,4 +11,5 @@
 - Desktop layout must fit 2560×1440 and common scaled viewports without document overflow or clipped controls. Verify actual scroll dimensions; do not hide overflow to mask layout problems. Keep mobile content scrollable.
 - Deployment uses GitHub and Vercel (`vercel.json`); do not register or publish this project through Sites. Mount Vercel Analytics and Speed Insights once in `src/main.js`; never commit `.vercel/` or local environment files.
 - UI copy lives in `src/i18n.js` (Chinese and English). Use the browser’s preferred language on first visit, persist manual selection, and translate status, accessibility labels and document metadata without restarting audio.
+- Fonts are self-hosted in `public/fonts/`: regenerate the Maple WOFF2 subset with `scripts/subset-font.py` when copy adds characters, retain OFL.txt, and verify font coverage plus bilingual layout. Do not restore third-party font requests.
 - Keep these conventions identical in AGENTS.md and CLAUDE.md.

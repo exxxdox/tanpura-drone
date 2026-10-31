@@ -287,22 +287,22 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="group relative min-h-dvh bg-bg text-ink wide:grid wide:h-dvh wide:grid-rows-[auto_minmax(0,1fr)_auto] wide:[--gutter:clamp(32px,5vw,96px)]" :data-playing="playing" :class="locale === 'en' ? '[&_*]:tracking-normal' : ''">
+  <div class="group relative min-h-dvh bg-bg text-ink wide:grid wide:h-dvh wide:grid-rows-[auto_minmax(0,1fr)_auto] wide:[--gutter:clamp(32px,5vw,96px)]" :data-playing="playing">
     <div class="grain" aria-hidden="true" />
     <header class="relative flex h-[116px] items-center gap-[25px] mobile:gap-2 px-[6%] mobile:h-[85px] wide:mx-auto wide:h-[clamp(72px,8dvh,112px)] wide:w-full wide:max-w-[1800px] wide:px-[var(--gutter)]">
-      <a class="shrink-0 text-[30px] mobile:text-[23px] font-semibold tracking-[-1.5px] text-ink no-underline" href="./" :aria-label="text.home"><span class="mr-3 mobile:mr-1 inline-block align-[-3px] text-[38px] mobile:text-[28px] text-gold">≋</span> tanpura<span class="text-gold">.</span></a>
-      <span class="border-l border-line pl-[25px] text-[13px] tracking-[3px] text-muted mobile:hidden">{{ text.tagline }}</span>
+      <a class="shrink-0 text-[30px] mobile:text-[18px] font-semibold tracking-[-1.5px] text-ink no-underline" href="./" :aria-label="text.home"><span class="mr-3 mobile:mr-1 inline-block align-[-3px] text-[38px] mobile:text-[22px] text-gold"><svg class="inline-block h-[1em] w-[1em]" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 10q5-6 11 0t11 0M5 16q5-6 11 0t11 0M5 22q5-6 11 0t11 0" /></svg></span> tanpura<span class="text-gold">.</span></a>
+      <span class="border-l border-line pl-[25px] text-[13px] tracking-[3px] text-muted mobile:hidden english:tracking-normal">{{ text.tagline }}</span>
       <!-- 原生 select 保留键盘与移动端选择器，装饰图标不拦截点击。 -->
       <div class="ml-auto flex shrink-0 items-center gap-2">
         <div class="group/language relative rounded-full text-muted transition-colors hover:text-gold focus-within:text-gold">
           <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 mobile:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="4" ry="9" /><path d="M3 12h18" /></svg>
-          <select id="language" class="h-11 cursor-pointer appearance-none rounded-full border border-[#dfbd8126] bg-[#dfbd8105] pl-10 pr-9 text-[13px] text-ink shadow-[inset_0_1px_0_#ffffff05] transition-colors hover:border-[#dfbd8166] hover:bg-[#dfbd810c] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold mobile:pl-3 mobile:pr-7" :aria-label="text.language" :value="locale" @change="setLocale">
+          <select id="language" class="h-11 w-[132px] mobile:w-[80px] cursor-pointer appearance-none rounded-full border border-[#dfbd8126] bg-[#dfbd8105] pl-10 pr-9 text-[13px] text-ink shadow-[inset_0_1px_0_#ffffff05] transition-colors hover:border-[#dfbd8166] hover:bg-[#dfbd810c] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold mobile:pl-3 mobile:pr-7" :aria-label="text.language" :value="locale" @change="setLocale">
             <option value="zh" lang="zh-CN" class="bg-bg text-ink">中文</option>
             <option value="en" lang="en" class="bg-bg text-ink">English</option>
           </select>
           <svg class="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
         </div>
-        <button id="sound-info" type="button" class="flex h-11 items-center gap-2 rounded-full border border-[#dfbd8126] bg-[#dfbd8105] px-4 text-[13px] text-ink shadow-[inset_0_1px_0_#ffffff05] transition-colors hover:border-[#dfbd8166] hover:bg-[#dfbd810c] hover:text-gold aria-expanded:border-[#dfbd8166] aria-expanded:bg-[#dfbd8114] aria-expanded:text-gold mobile:px-3" :aria-expanded="infoOpen" aria-controls="credits" @click="infoOpen = !infoOpen">
+        <button id="sound-info" type="button" class="flex h-11 w-[104px] mobile:w-[64px] justify-center items-center gap-2 rounded-full border border-[#dfbd8126] bg-[#dfbd8105] px-4 text-[13px] text-ink shadow-[inset_0_1px_0_#ffffff05] transition-colors hover:border-[#dfbd8166] hover:bg-[#dfbd810c] hover:text-gold aria-expanded:border-[#dfbd8166] aria-expanded:bg-[#dfbd8114] aria-expanded:text-gold mobile:px-3 english:tracking-normal" :aria-expanded="infoOpen" aria-controls="credits" @click="infoOpen = !infoOpen">
           <svg class="h-4 w-4 text-gold mobile:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4m4-7v10m4-13v16m4-13v10m4-7v4" /></svg>
           {{ text.sources }}
         </button>
@@ -310,10 +310,10 @@ onUnmounted(() => {
     </header>
     <main class="relative mx-auto grid max-w-[1440px] grid-cols-[1fr_1.6fr] items-center px-[6%] pb-[62px] pt-5 mobile:grid-cols-1 mobile:pt-[22px] wide:w-full wide:max-w-[1800px] wide:min-h-0 wide:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] wide:grid-rows-[minmax(0,1fr)_auto] wide:gap-y-[clamp(16px,2.4dvh,32px)] wide:px-[var(--gutter)] wide:pb-[clamp(18px,3dvh,40px)] wide:pt-0">
       <section class="min-w-0 self-center pt-[5px] mobile:z-[2]">
-        <div class="flex items-center gap-[10px] text-[12px] tracking-[3px] text-gold mobile:text-[11px]"><span class="h-[5px] w-[5px] rounded-full bg-gold" /> {{ text.eyebrow }}</div>
-        <h1 class="mb-[22px] mt-6 font-serif text-[clamp(48px,5.8vw,84px)] font-normal leading-[1.5] tracking-[4px] mobile:my-[15px] mobile:text-[clamp(30px,8.5vw,36px)] mobile:leading-[1.4] mobile:tracking-[2px] wide:my-[clamp(16px,2dvh,28px)] wide:text-[clamp(44px,min(4.8vw,7.4dvh),90px)] wide:leading-[1.4]">{{ text.heading1 }}<br class="mobile:hidden" />{{ text.heading2 }}</h1>
-        <p class="my-[1em] text-[15px] leading-[2.1] tracking-[2px] text-muted mobile:m-0 mobile:text-[13px] mobile:leading-[1.8] short:text-[14px]">{{ text.intro1 }}<br class="mobile:hidden" />{{ text.intro2 }}</p>
-        <div class="mt-[45px] flex items-center gap-[14px] text-[12px] tracking-[2px] text-muted mobile:hidden wide:mt-[clamp(16px,3dvh,40px)]"><span class="text-[30px] text-gold">✳</span><span>{{ text.twelve }}</span></div>
+        <div class="flex items-center gap-[10px] text-[12px] tracking-[3px] text-gold mobile:text-[11px] english:tracking-normal"><span class="h-[5px] w-[5px] rounded-full bg-gold" /> {{ text.eyebrow }}</div>
+        <h1 class="mb-[22px] mt-6 font-serif text-[clamp(48px,5.8vw,84px)] font-normal leading-[1.5] tracking-[4px] mobile:my-[15px] mobile:text-[clamp(30px,8.5vw,36px)] mobile:leading-[1.4] mobile:tracking-[2px] wide:my-[clamp(16px,2dvh,28px)] wide:text-[clamp(44px,min(4.8vw,7.4dvh),90px)] wide:leading-[1.4] english:tracking-normal">{{ text.heading1 }}<br class="mobile:hidden" />{{ text.heading2 }}</h1>
+        <p class="my-[1em] text-[15px] leading-[2.1] tracking-[2px] text-muted mobile:m-0 mobile:text-[13px] mobile:leading-[1.8] short:text-[14px] english:tracking-normal">{{ text.intro1 }}<br class="mobile:hidden" />{{ text.intro2 }}</p>
+        <div class="mt-[45px] flex items-center gap-[14px] text-[12px] tracking-[2px] text-muted mobile:hidden wide:mt-[clamp(16px,3dvh,40px)]"><span class="text-[30px] text-gold"><svg class="h-[1em] w-[1em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2v20M2 12h20M5 5l14 14M5 19 19 5" /></svg></span><span>{{ text.twelve }}</span></div>
       </section>
       <section class="relative min-w-0 mobile:mt-[6px] wide:flex wide:h-full wide:min-h-0 wide:flex-col wide:items-center wide:justify-center" :aria-label="text.player">
         <!-- 宽屏由行高决定方形尺寸，控制卡变高时场景自动收缩，状态行不会压到下方模块。 -->
@@ -322,7 +322,7 @@ onUnmounted(() => {
           <div class="pointer-events-none absolute inset-[14%] rounded-full border border-gold opacity-[calc(var(--energy)*.26)] transition-opacity duration-300 scale-[calc(.97_+_var(--energy)*.15)] motion-reduce:hidden" aria-hidden="true" /><div class="pointer-events-none absolute inset-[7%] rounded-full border border-gold opacity-[calc(var(--energy)*.12)] transition-opacity duration-300 scale-[calc(.97_+_var(--energy)*.08)] motion-reduce:hidden" aria-hidden="true" />
           <div class="absolute inset-[3%] rounded-full border border-dashed border-[#b8a57528] transition-shadow duration-1000" /><div class="absolute inset-[10%] rounded-full border border-[#b8a5753b] transition-shadow duration-1000 group-data-[playing=true]:animate-turn before:absolute before:-top-[3px] before:left-1/2 before:h-1.5 before:w-1.5 before:rounded-full before:bg-gold before:shadow-[0_0_15px_#dfbd8177] before:content-[''] after:absolute after:bottom-[-3px] after:left-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-gold after:shadow-[0_0_15px_#dfbd8177] after:content-[''] mobile:before:hidden" /><div class="absolute inset-[17%] rounded-full border border-[#b8a57518] transition-shadow duration-1000 group-data-[playing=true]:opacity-[calc(.4_+_var(--energy)*.6)] group-data-[playing=true]:shadow-[0_0_35px_#dfbd810c,inset_0_0_35px_#dfbd810c] group-hover/scene:border-[#dfbd8155]" />
           <!-- 字间距在末字后也占位，把视觉文字推左半个字距；用相对位移回正到中心竖轴。 -->
-          <div class="absolute left-1/2 top-[8%] -translate-x-1/2 bg-bg px-[15px] py-2 text-[11px] tracking-[5px] text-muted mobile:hidden"><span class="relative left-[2.5px]">{{ text.resonance }}</span></div><div class="absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap bg-bg px-[15px] py-2 text-[11px] tracking-[3px] text-muted"><span class="relative left-[1.5px]">Pa · Sa · Sa · Sa</span></div>
+          <div class="absolute left-1/2 top-[8%] -translate-x-1/2 bg-bg px-[15px] py-2 text-[11px] tracking-[5px] text-muted mobile:hidden"><span class="relative left-[2.5px] english:tracking-normal">{{ text.resonance }}</span></div><div class="absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap bg-bg px-[15px] py-2 text-[11px] tracking-[3px] text-muted"><span class="relative left-[1.5px]">Pa · Sa · Sa · Sa</span></div>
           <svg class="absolute inset-0 h-full w-full opacity-[.36] transition-[opacity,filter] duration-700 group-data-[playing=true]:opacity-[calc(.42_+_var(--energy)*.55)] group-data-[playing=true]:drop-shadow-[0_0_5px_#dfbd8166] group-hover/scene:opacity-[.8]" viewBox="0 0 600 600" aria-hidden="true">
             <defs><linearGradient id="thread"><stop stop-color="#c5a46b" stop-opacity="0" /><stop offset=".5" stop-color="#e8c78c" /><stop offset="1" stop-color="#c5a46b" stop-opacity="0" /></linearGradient></defs>
             <g fill="none" stroke="url(#thread)">
@@ -333,7 +333,7 @@ onUnmounted(() => {
             </g>
           </svg>
           <!-- 主音、频率、圆钮、上下标签统一按几何中心落在场景竖轴；升号绝对定位，不参与字母居中。 -->
-          <div class="row-start-2 z-[1] -translate-y-6 text-center mobile:-translate-y-14 group-data-[playing=true]:drop-shadow-[0_0_18px_#dfbd811a]"><span class="block text-[11px] tracking-[4px] text-muted short:hidden"><span class="relative left-[2px]">{{ text.tonic }}</span></span><div id="pitch" class="font-pitch text-[124px] leading-[1.35] text-gold [text-shadow:0_0_70px_#d7b57822] mobile:text-[clamp(78px,26vw,100px)] wide:text-[clamp(78px,13dvh,140px)] short:text-[clamp(68px,11dvh,90px)]"><span class="relative inline-block">{{ note[0] }}<span v-if="note.length > 1" class="absolute left-full top-[18.6%] ml-[2px] text-[37px]">♯</span></span></div><span id="frequency" class="text-[13px] tracking-[2px] text-muted [font-variant-numeric:tabular-nums]"><span class="relative left-[1px]">≈ {{ frequencyFor(selected).toFixed(1) }} Hz</span></span></div>
+          <div class="row-start-2 z-[1] -translate-y-6 text-center mobile:-translate-y-14 group-data-[playing=true]:drop-shadow-[0_0_18px_#dfbd811a]"><span class="block text-[11px] tracking-[4px] text-muted short:hidden"><span class="relative left-[2px] english:tracking-normal">{{ text.tonic }}</span></span><div id="pitch" class="font-pitch text-[124px] leading-[1.35] text-gold [text-shadow:0_0_70px_#d7b57822] mobile:text-[clamp(78px,26vw,100px)] wide:text-[clamp(78px,13dvh,140px)] short:text-[clamp(68px,11dvh,90px)]"><span class="relative inline-block">{{ note[0] }}<span v-if="note.length > 1" class="absolute left-full top-[18.6%] ml-[2px] text-[37px]">♯</span></span></div><span id="frequency" class="text-[13px] tracking-[2px] text-muted [font-variant-numeric:tabular-nums]"><span class="relative left-[1px]">≈ {{ frequencyFor(selected).toFixed(1) }} Hz</span></span></div>
           <!-- 下方网格承接频率后的空间，并扣除底部音名标签区域，让圆钮居于两者之间。 -->
           <div class="row-start-3 z-[2] -mt-6 grid min-h-0 w-full self-stretch place-items-center pb-[calc(8%_+_2rem)] mobile:-mt-14">
             <button ref="playButton" id="play" class="grid h-16 w-16 place-items-center rounded-full border border-[#dfbd81aa] bg-[#243126] text-gold shadow-[0_0_calc(var(--energy)*26px)_#dfbd8133] transition-[background,box-shadow,transform] duration-[250ms] group-data-[playing=true]:border-gold group-data-[playing=true]:bg-gold group-data-[playing=true]:text-bg hover:scale-[1.09] hover:bg-gold hover:text-bg hover:shadow-[0_0_35px_#dfbd8133] short:h-11 short:w-11" :aria-label="active ? text.pause : text.play" :aria-pressed="active" :aria-busy="loading" @click="togglePlayback">
@@ -347,28 +347,28 @@ onUnmounted(() => {
       <section class="col-span-full mt-[34px] rounded-xl border border-line bg-surface px-[30px] pb-5 pt-[27px] mobile:mt-7 mobile:px-4 mobile:pb-4 mobile:pt-5 wide:mt-0 wide:min-w-0 wide:p-[clamp(16px,2.2dvh,28px)]" :aria-label="text.controls">
         <div class="wide:grid wide:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] wide:items-start wide:gap-x-[clamp(24px,3.4vw,64px)]">
           <div class="min-w-0">
-            <div class="mb-[19px] flex items-center justify-between mobile:mb-3 wide:mb-[clamp(12px,1.5dvh,20px)]"><h2 class="m-0 text-[14px] font-medium tracking-[2px]">{{ text.choose }}</h2><span class="text-[11px] tracking-[1px] text-muted">{{ text.sa }}</span></div>
+            <div class="mb-[19px] flex items-center justify-between mobile:mb-3 wide:mb-[clamp(12px,1.5dvh,20px)]"><h2 class="m-0 text-[14px] font-medium tracking-[2px] english:tracking-normal">{{ text.choose }}</h2><span class="text-[11px] tracking-[1px] text-muted english:tracking-normal">{{ text.sa }}</span></div>
             <div id="keys" class="grid grid-cols-12 gap-[9px] mobile:grid-cols-6 mobile:gap-2" role="group" :aria-label="text.keys">
               <button v-for="(key, index) in NOTES" :key="key" type="button" class="relative h-[63px] rounded-[7px] border border-[#3c463b] bg-[#1c251f] font-pitch text-[22px] text-[#bcc5bb] transition-[transform,background,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-gold hover:bg-[#30372a] hover:text-gold aria-pressed:border-gold aria-pressed:bg-gold aria-pressed:text-[#182019] aria-pressed:shadow-[0_4px_25px_#dfbd8120] aria-pressed:after:absolute aria-pressed:after:bottom-[7px] aria-pressed:after:left-[calc(50%_-_2px)] aria-pressed:after:h-1 aria-pressed:after:w-1 aria-pressed:after:rounded-full aria-pressed:after:bg-[#3a412f] aria-pressed:after:content-[''] mobile:h-[52px] wide:h-[clamp(48px,5dvh,64px)]" :aria-label="t('key', { note: `${key}${droneOctave(index)}` })" :aria-pressed="index === selected" @click="selectKey(index)">{{ key[0] }}<small v-if="key.length > 1" class="ml-px align-super text-[13px]">♯</small>{{ droneOctave(index) }}</button>
             </div>
             <div class="mx-auto mb-[22px] mt-7 flex max-w-[440px] items-center gap-[18px] text-[12px] text-muted mobile:mx-0 mobile:mb-5 mobile:mt-[25px] wide:my-[clamp(14px,2dvh,24px)]">
-              <label class="flex items-center gap-[9px] whitespace-nowrap" for="volume"><svg class="h-4 w-4 fill-none stroke-current [stroke-width:1.5]" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Zm4 3q5 4 0 8m3-11q8 7 0 14" /></svg>{{ text.volume }}</label>
+              <label class="flex items-center gap-[9px] whitespace-nowrap english:tracking-normal" for="volume"><svg class="h-4 w-4 fill-none stroke-current [stroke-width:1.5]" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Zm4 3q5 4 0 8m3-11q8 7 0 14" /></svg>{{ text.volume }}</label>
               <input id="volume" class="volume-range" type="range" min="0" max="100" :value="volume" :style="{ '--fill': `${volume}%` }" :aria-label="text.volume" @input="onVolumeInput" />
               <output id="volume-value" class="w-10 [font-variant-numeric:tabular-nums]" for="volume">{{ volume }}%</output>
             </div>
           </div>
           <div class="mt-8 min-w-0 border-t border-line pt-6 wide:mt-0 wide:border-t-0 wide:pt-0">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-              <h2 class="m-0 text-[14px] font-medium tracking-[2px]">{{ text.synth }}</h2>
+              <h2 class="m-0 text-[14px] font-medium tracking-[2px] english:tracking-normal">{{ text.synth }}</h2>
               <div class="flex flex-wrap items-center gap-2">
-                <label class="flex items-center gap-1.5 text-[11px] tracking-[1px] text-muted">{{ text.range }}
+                <label class="flex items-center gap-1.5 text-[11px] tracking-[1px] text-muted english:tracking-normal">{{ text.range }}
                   <select class="rounded-[6px] border border-line bg-[#1c251f] px-2 py-1 text-[11px] tracking-normal text-ink" :value="synthRange" :aria-label="text.octave" @change="setSynthRange">
                     <option v-for="base in SYNTH_RANGES" :key="base" :value="base">{{ rangeLabel(base) }}</option>
                   </select>
                 </label>
                 <div class="flex rounded-full border border-line p-[3px]" role="group" :aria-label="text.mode">
-                  <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors" :class="synthMode === 'latch' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'latch'" @click="setSynthMode('latch')">{{ text.latch }}</button>
-                  <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors" :class="synthMode === 'hold' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'hold'" @click="setSynthMode('hold')">{{ text.hold }}</button>
+                  <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors english:tracking-normal" :class="synthMode === 'latch' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'latch'" @click="setSynthMode('latch')">{{ text.latch }}</button>
+                  <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors english:tracking-normal" :class="synthMode === 'hold' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'hold'" @click="setSynthMode('hold')">{{ text.hold }}</button>
                 </div>
               </div>
             </div>
@@ -383,21 +383,21 @@ onUnmounted(() => {
               </div>
             </div>
             <div class="mt-3 flex items-center gap-3 text-[11px] text-muted">
-              <label class="whitespace-nowrap" for="synth-volume">{{ text.synthVolume }}</label>
+              <label class="whitespace-nowrap english:tracking-normal" for="synth-volume">{{ text.synthVolume }}</label>
               <input id="synth-volume" class="volume-range flex-1" type="range" min="0" max="100" :value="synthVolume" :style="{ '--fill': `${synthVolume}%` }" :aria-label="text.synthVolume" @input="onSynthVolumeInput" />
               <output class="w-9 text-right [font-variant-numeric:tabular-nums]" for="synth-volume">{{ synthVolume }}%</output>
             </div>
-            <p class="mt-2.5 text-[10px] leading-[1.7] tracking-[1px] text-muted">{{ t('shortcuts', { note: topNote }) }}</p>
+            <p class="mt-2.5 text-[10px] leading-[1.7] tracking-[1px] text-muted english:tracking-normal">{{ t('shortcuts', { note: topNote }) }}</p>
           </div>
         </div>
         <div class="mt-6 flex flex-wrap justify-between gap-x-4 gap-y-2 border-t border-line pt-4 text-[11px] tracking-[1px] text-muted wide:mt-[clamp(12px,1.6dvh,20px)] wide:pt-3"><span>{{ text.recording }}</span><span>{{ text.headphones }}</span></div>
       </section>
     </main>
-    <footer class="relative mx-[6%] flex justify-between border-t border-line pb-7 pt-[23px] text-[12px] tracking-[2px] text-muted mobile:text-[11px] wide:mx-auto wide:min-h-[48px] wide:w-[calc(100%_-_2*var(--gutter))] wide:max-w-[calc(1800px_-_2*var(--gutter))] wide:items-center wide:py-4"><span>{{ text.footer }}</span><span class="footer-right mobile:hidden">{{ text.footerRight }} <span class="ml-[18px] text-gold">✦</span></span></footer>
+    <footer class="relative mx-[6%] flex justify-between border-t border-line pb-7 pt-[23px] text-[12px] tracking-[2px] text-muted mobile:text-[11px] wide:mx-auto wide:min-h-[48px] wide:w-[calc(100%_-_2*var(--gutter))] wide:max-w-[calc(1800px_-_2*var(--gutter))] wide:items-center wide:py-4"><span>{{ text.footer }}</span><span class="footer-right mobile:hidden english:tracking-normal">{{ text.footerRight }} <span class="ml-[18px] text-gold"><svg class="inline-block h-3 w-3" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0q0 8 8 8-8 0-8 8Q8 8 0 8q8 0 8-8" /></svg></span></span></footer>
     <aside id="credits" :hidden="!infoOpen" class="fixed right-[6%] top-[90px] z-10 max-w-[380px] rounded-xl border border-[#6d775b] bg-[#202a23] p-6 text-[14px] leading-[1.9] shadow-[0_20px_90px_#0008] mobile:left-[6%] mobile:max-w-none" aria-labelledby="credits-title">
-      <div class="flex items-center justify-between"><h2 id="credits-title" class="m-0 text-[18px]">{{ text.about }}</h2><button class="border-0 bg-transparent text-[28px] text-ink" :aria-label="text.close" @click="infoOpen = false">×</button></div>
-      <p class="my-[1em] text-[#c1c9bf]">{{ text.aboutRecording }}</p>
-      <p class="my-[1em] text-[#c1c9bf]">{{ text.aboutSynth }}</p>
+      <div class="flex items-center justify-between"><h2 id="credits-title" class="m-0 text-[18px] english:tracking-normal">{{ text.about }}</h2><button class="border-0 bg-transparent text-[28px] text-ink" :aria-label="text.close" @click="infoOpen = false">×</button></div>
+      <p class="my-[1em] text-[#c1c9bf] english:tracking-normal">{{ text.aboutRecording }}</p>
+      <p class="my-[1em] text-[#c1c9bf] english:tracking-normal">{{ text.aboutSynth }}</p>
     </aside>
   </div>
 </template>

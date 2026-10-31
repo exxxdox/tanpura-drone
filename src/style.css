@@ -1,9 +1,21 @@
 @import "tailwindcss";
 
+/* 本地子集统一中英文字形；swap 避免字体下载期间隐藏文案。 */
+@font-face {
+  font-family: 'Tanpura Maple';
+  src: url('/fonts/tanpura-maple.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 /* 断点沿用原有 760px / 1000px×700px 条件，窄屏和矮窗口各自保留原布局。 */
 @custom-variant mobile (@media (max-width: 760px));
 @custom-variant wide (@media (min-width: 1000px) and (min-height: 700px));
 @custom-variant short (@media (min-width: 1000px) and (min-height: 700px) and (max-height: 850px));
+
+/* 英文字距只用于翻译文案，品牌、音名与数字不随语言切换。 */
+@custom-variant english (&:where(html[lang="en"] *));
 
 @theme static {
   --color-bg: #101513;
@@ -12,9 +24,9 @@
   --color-gold: #dfbd81;
   --color-line: #313a33;
   --color-surface: #18201b99;
-  --font-sans: 'DM Sans', sans-serif;
-  --font-serif: 'Noto Serif SC', serif;
-  --font-pitch: Georgia, serif;
+  --font-sans: 'Tanpura Maple', monospace;
+  --font-serif: 'Tanpura Maple', monospace;
+  --font-pitch: 'Tanpura Maple', monospace;
   --animate-turn: turn 45s linear infinite;
 
   @keyframes turn {
@@ -24,7 +36,7 @@
 
 @layer base {
   html { color-scheme: dark; }
-  body { margin: 0; min-height: 100vh; background: var(--color-bg); color: var(--color-ink); font-family: 'DM Sans', sans-serif; }
+  body { margin: 0; min-height: 100vh; background: var(--color-bg); color: var(--color-ink); font-family: var(--font-sans); }
   body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse at 63% 41%, #34433355, transparent 55%); pointer-events: none; }
   button, a, input { -webkit-tap-highlight-color: transparent; }
   button { font: inherit; cursor: pointer; }
