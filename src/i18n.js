@@ -1,7 +1,7 @@
 // 文案集中管理，切换语言只更新显示，不重建播放器或合成器。
 export const messages = {
   zh: {
-    home: 'Tanpura 首页', tagline: '为专注而鸣', sources: '音源 ↗', language: '语言',
+    home: 'Tanpura 首页', tagline: '为专注而鸣', sources: '音源', language: '语言',
     eyebrow: '你的随身印度持续音', heading1: '一弦，', heading2: '进入心流。',
     intro1: '让声音延展。', intro2: '找到你的调，回到此刻。', twelve: '十二个调 · 无限共鸣',
     player: 'Tanpura 播放器', resonance: '共 鸣', tonic: '当前主音', pause: '暂停播放', play: '开始播放',
@@ -19,7 +19,7 @@ export const messages = {
     title: 'Tanpura — 弦外之境', description: '十二个调，一片共鸣。无需登录的 Tanpura 持续音练习空间。',
   },
   en: {
-    home: 'Tanpura home', tagline: 'Sound for focus', sources: 'Sound ↗', language: 'Language',
+    home: 'Tanpura home', tagline: 'Sound for focus', sources: 'Sound', language: 'Language',
     eyebrow: 'Your Indian drone companion', heading1: 'One string.', heading2: 'Find your flow.',
     intro1: 'Let sound unfold.', intro2: 'Find your key. Return to now.', twelve: 'Twelve keys · Endless resonance',
     player: 'Tanpura player', resonance: 'RESONANCE', tonic: 'CURRENT TONIC', pause: 'Pause playback', play: 'Start playback',

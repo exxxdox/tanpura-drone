@@ -292,11 +292,21 @@ onUnmounted(() => {
     <header class="relative flex h-[116px] items-center gap-[25px] mobile:gap-2 px-[6%] mobile:h-[85px] wide:mx-auto wide:h-[clamp(72px,8dvh,112px)] wide:w-full wide:max-w-[1800px] wide:px-[var(--gutter)]">
       <a class="shrink-0 text-[30px] mobile:text-[23px] font-semibold tracking-[-1.5px] text-ink no-underline" href="./" :aria-label="text.home"><span class="mr-3 mobile:mr-1 inline-block align-[-3px] text-[38px] mobile:text-[28px] text-gold">≋</span> tanpura<span class="text-gold">.</span></a>
       <span class="border-l border-line pl-[25px] text-[13px] tracking-[3px] text-muted mobile:hidden">{{ text.tagline }}</span>
-      <select id="language" class="ml-auto rounded-full border border-line bg-bg px-3 mobile:px-2 py-2 text-[13px] text-muted" :aria-label="text.language" :value="locale" @change="setLocale">
-        <option value="zh" lang="zh-CN">中文</option>
-        <option value="en" lang="en">English</option>
-      </select>
-      <button id="sound-info" class="shrink-0 rounded-[30px] border border-line bg-transparent px-[18px] mobile:px-2 py-[10px] text-[13px] text-muted transition-colors hover:border-gold hover:text-gold" :aria-expanded="infoOpen" aria-controls="credits" @click="infoOpen = !infoOpen">{{ text.sources }}</button>
+      <!-- 原生 select 保留键盘与移动端选择器，装饰图标不拦截点击。 -->
+      <div class="ml-auto flex shrink-0 items-center gap-2">
+        <div class="group/language relative rounded-full text-muted transition-colors hover:text-gold focus-within:text-gold">
+          <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 mobile:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="4" ry="9" /><path d="M3 12h18" /></svg>
+          <select id="language" class="h-11 cursor-pointer appearance-none rounded-full border border-[#dfbd8126] bg-[#dfbd8105] pl-10 pr-9 text-[13px] text-ink shadow-[inset_0_1px_0_#ffffff05] transition-colors hover:border-[#dfbd8166] hover:bg-[#dfbd810c] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold mobile:pl-3 mobile:pr-7" :aria-label="text.language" :value="locale" @change="setLocale">
+            <option value="zh" lang="zh-CN" class="bg-bg text-ink">中文</option>
+            <option value="en" lang="en" class="bg-bg text-ink">English</option>
+          </select>
+          <svg class="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+        </div>
+        <button id="sound-info" type="button" class="flex h-11 items-center gap-2 rounded-full border border-[#dfbd8126] bg-[#dfbd8105] px-4 text-[13px] text-ink shadow-[inset_0_1px_0_#ffffff05] transition-colors hover:border-[#dfbd8166] hover:bg-[#dfbd810c] hover:text-gold aria-expanded:border-[#dfbd8166] aria-expanded:bg-[#dfbd8114] aria-expanded:text-gold mobile:px-3" :aria-expanded="infoOpen" aria-controls="credits" @click="infoOpen = !infoOpen">
+          <svg class="h-4 w-4 text-gold mobile:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4m4-7v10m4-13v16m4-13v10m4-7v4" /></svg>
+          {{ text.sources }}
+        </button>
+      </div>
     </header>
     <main class="relative mx-auto grid max-w-[1440px] grid-cols-[1fr_1.6fr] items-center px-[6%] pb-[62px] pt-5 mobile:grid-cols-1 mobile:pt-[22px] wide:w-full wide:max-w-[1800px] wide:min-h-0 wide:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] wide:grid-rows-[minmax(0,1fr)_auto] wide:gap-y-[clamp(16px,2.4dvh,32px)] wide:px-[var(--gutter)] wide:pb-[clamp(18px,3dvh,40px)] wide:pt-0">
       <section class="min-w-0 self-center pt-[5px] mobile:z-[2]">
