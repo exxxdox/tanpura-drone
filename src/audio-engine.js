@@ -24,16 +24,7 @@ export class Drone {
     for (const voice of this.voices) if (voice !== this.active) this.release(voice);
     let voice;
     try {
-      this.context ??= new AudioContext();
-      if (!this.master) {
-        this.master = this.context.createGain();
-        this.master.gain.value = this.volume * .7;
-        this.analyser = this.context.createAnalyser();
-        this.analyser.fftSize = 256;
-        this.samples = new Float32Array(this.analyser.fftSize);
-        this.master.connect(this.analyser);
-        this.analyser.connect(this.context.destination);
-      }
+      this.ensure();
       // 流式解码完整录音，不把 25 分钟音频全部展开为 PCM 缓存。
       voice = this.active?.index === index ? this.active : this.createVoice(index);
       voice.generation = generation;
@@ -71,6 +62,21 @@ export class Drone {
       if (generation !== this.generation) return false;
       throw error;
     }
+  }
+
+  // 供合成器共用音频上下文与主音量；必须由用户手势触发。
+  ensure() {
+    this.context ??= new AudioContext();
+    if (!this.master) {
+      this.master = this.context.createGain();
+      this.master.gain.value = this.volume * .7;
+      this.analyser = this.context.createAnalyser();
+      this.analyser.fftSize = 256;
+      this.samples = new Float32Array(this.analyser.fftSize);
+      this.master.connect(this.analyser);
+      this.analyser.connect(this.context.destination);
+    }
+    return this.context;
   }
 
   createVoice(index) {
