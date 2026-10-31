@@ -1,26 +1,30 @@
-// 合成器低音：C1–C3 两个八度。声部接在 Drone 的 master 上，共用音量与 analyser。
-export const SYNTH_NOTES = Array.from({ length: 25 }, (_, index) => 24 + index);
+// 合成器低音：每组两个八度 + 收尾高音，起始八度可切换。声部接在 Drone 的 master 上。
+export const SYNTH_RANGES = [0, 1, 2, 3, 4, 5];
 
-// 电脑键盘按钢琴布局左右手分区：Z–M 为 C1–B1，Q–U 为 C2–B2，I 为最高 C3。
+// 键位映射存音域内偏移 0–24：Z–M 低音区，Q–U 高音区，I 为收尾高音。
 export const SYNTH_KEY_MAP = {
-  z: 24, s: 25, x: 26, d: 27, c: 28, v: 29, g: 30, b: 31, h: 32, n: 33, j: 34, m: 35,
-  q: 36, 2: 37, w: 38, 3: 39, e: 40, r: 41, 5: 42, t: 43, 6: 44, y: 45, 7: 46, u: 47,
-  i: 48,
+  z: 0, s: 1, x: 2, d: 3, c: 4, v: 5, g: 6, b: 7, h: 8, n: 9, j: 10, m: 11,
+  q: 12, 2: 13, w: 14, 3: 15, e: 16, r: 17, 5: 18, t: 19, 6: 20, y: 21, 7: 22, u: 23,
+  i: 24,
 };
 
 const BLACK_PITCHES = new Set([1, 3, 6, 8, 10]);
-const WHITE_COUNT = SYNTH_NOTES.filter(midi => !BLACK_PITCHES.has(midi % 12)).length;
+
+// C{base} 的 MIDI 号是 (base + 1) * 12，例如 C1 = 24。
+export const synthNotes = base => Array.from({ length: 25 }, (_, index) => (base + 1) * 12 + index);
+
+const WHITE_COUNT = synthNotes(0).filter(midi => !BLACK_PITCHES.has(midi % 12)).length;
 
 // 黑键的 left 取“此前白键数量”的百分比，模板据此绝对定位。
-export const SYNTH_KEYS = (() => {
+export const synthKeys = base => {
   let white = 0;
-  return SYNTH_NOTES.map(midi => {
+  return synthNotes(base).map(midi => {
     const black = BLACK_PITCHES.has(midi % 12);
     const key = { midi, black, left: (white / WHITE_COUNT) * 100 };
     if (!black) white++;
     return key;
   });
-})();
+};
 
 export const synthFrequency = midi => 440 * 2 ** ((midi - 69) / 12);
 
@@ -31,6 +35,8 @@ const RELEASE = .4;
 export class Synth {
   voices = new Map();
   bus;
+  level;
+  volume = 1;
   disposed = false;
 
   constructor(drone) {
@@ -38,7 +44,7 @@ export class Synth {
   }
 
   noteOn(midi) {
-    if (this.disposed || !SYNTH_NOTES.includes(midi)) return false;
+    if (this.disposed || !Number.isInteger(midi) || midi < 0 || midi > 127) return false;
     const current = this.voices.get(midi);
     if (current && !current.releasing) return false;
     if (current) this.finish(current);
@@ -90,12 +96,20 @@ export class Synth {
     for (const midi of [...this.voices.keys()]) this.noteOff(midi);
   }
 
+  // 合成器独立音量，不再受 Tanpura 主音量影响。
+  setVolume(value) {
+    this.volume = Math.max(0, Math.min(1, value));
+    if (this.level) this.level.gain.setTargetAtTime(this.volume, this.drone.context.currentTime, .06);
+  }
+
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
     for (const voice of [...this.voices.values()]) this.finish(voice);
     this.bus?.disconnect();
+    this.level?.disconnect();
     this.bus = undefined;
+    this.level = undefined;
   }
 
   output() {
@@ -105,7 +119,11 @@ export class Synth {
       this.bus = context.createDynamicsCompressor();
       this.bus.threshold.value = -18;
       this.bus.ratio.value = 6;
-      this.bus.connect(this.drone.master);
+      // 独立音量节点直接进入共享 analyser：绕开 Tanpura 主音量，但保留可视化能量。
+      this.level = context.createGain();
+      this.level.gain.value = this.volume;
+      this.bus.connect(this.level);
+      this.level.connect(this.drone.analyser);
     }
     return context;
   }

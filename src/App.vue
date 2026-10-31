@@ -1,15 +1,13 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Drone, NOTES, frequencyFor } from './audio-engine.js';
-import { Synth, SYNTH_KEYS, SYNTH_KEY_MAP } from './synth.js';
+import { Synth, SYNTH_KEY_MAP, SYNTH_RANGES, synthKeys, synthNotes } from './synth.js';
 
 const STRING_SHAPES = [[230, -38], [275, -16], [325, 16], [370, 38]];
 const ANCHORS = STRING_SHAPES.flatMap(([x]) => [72, 528].map(y => ({ x, y })));
 const basePath = ([x, bow]) => `M${x} 72 C${x + bow} 180 ${x + bow} 420 ${x} 528`;
-// 键盘按白键与黑键分开渲染，黑键用 left 百分比叠在白键之间。
-const WHITE_KEYS = SYNTH_KEYS.filter(key => !key.black);
-const BLACK_KEYS = SYNTH_KEYS.filter(key => key.black);
 const labelFor = midi => `${NOTES[midi % 12]}${Math.floor(midi / 12) - 1}`;
+const rangeLabel = base => `C${base}–C${base + 2}`;
 
 let engine;
 let synth;
@@ -28,7 +26,15 @@ const error = ref('');
 const volume = ref(65);
 const infoOpen = ref(false);
 const synthMode = ref('latch');
+const synthRange = ref(1);
+const synthVolume = ref(45);
 const activeNotes = ref(new Set());
+// 记录由电脑键盘按下的音，keyup 只释放这些音，避免切断鼠标按住的声部。
+const keyboardNotes = new Set();
+// 键盘按白键与黑键分开渲染，黑键用 left 百分比叠在白键之间。
+const whiteKeys = computed(() => synthKeys(synthRange.value).filter(key => !key.black));
+const blackKeys = computed(() => synthKeys(synthRange.value).filter(key => key.black));
+const topNote = computed(() => labelFor(synthNotes(synthRange.value).at(-1)));
 
 const note = computed(() => NOTES[selected.value]);
 const active = computed(() => playing.value || loading.value);
@@ -101,6 +107,8 @@ function togglePlayback() {
   if (!intent) { play(selected.value); return; }
   intent = false;
   engine.stop();
+  // 暂停是整体停止：主按钮按下后不能再有合成器声部继续响。
+  releaseAll();
   playing.value = false;
   loading.value = false;
   error.value = '';
@@ -137,8 +145,11 @@ function pressNote(midi) {
   if (activeNotes.value.has(midi)) noteOff(midi); else noteOn(midi);
 }
 
-function holdNote(midi) {
-  if (synthMode.value === 'hold') noteOn(midi);
+function holdNote(event, midi) {
+  if (synthMode.value !== 'hold') return;
+  // 只响应主指针左键：右键菜单可能吞掉 pointerup，留下挂音。
+  if (!event.isPrimary || event.button !== 0) return;
+  noteOn(midi);
 }
 
 function releaseNote(midi) {
@@ -160,6 +171,7 @@ function keyRelease(event, midi) {
 
 function releaseAll() {
   synth?.stop();
+  keyboardNotes.clear();
   activeNotes.value = new Set();
 }
 
@@ -174,20 +186,38 @@ function isFormField(target) {
   return target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 }
 
+// 切换音域时释放全部声部，避免旧音域的音挂住。
+function setSynthRange(event) {
+  const base = Number(event.target.value);
+  if (!SYNTH_RANGES.includes(base)) return;
+  releaseAll();
+  synthRange.value = base;
+}
+
+// 键盘映射存的是音域内偏移，按键时换算成当前八度的 MIDI 音高。
+function midiFor(offset) {
+  return synthNotes(synthRange.value)[offset];
+}
+
 function onSynthKeyDown(event) {
   if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if (isFormField(event.target)) return;
-  const midi = SYNTH_KEY_MAP[event.key.toLowerCase()];
-  if (midi === undefined) return;
+  const offset = SYNTH_KEY_MAP[event.key.toLowerCase()];
+  if (offset === undefined) return;
   event.preventDefault();
-  if (synthMode.value === 'latch') pressNote(midi); else noteOn(midi);
+  const midi = midiFor(offset);
+  if (synthMode.value === 'latch') { pressNote(midi); return; }
+  keyboardNotes.add(midi);
+  noteOn(midi);
 }
 
 // 只处理“按住”模式的松键，持续模式在 keydown 时已完成切换。
 function onSynthKeyUp(event) {
   if (synthMode.value !== 'hold') return;
-  const midi = SYNTH_KEY_MAP[event.key.toLowerCase()];
-  if (midi !== undefined) noteOff(midi);
+  const offset = SYNTH_KEY_MAP[event.key.toLowerCase()];
+  if (offset === undefined) return;
+  const midi = midiFor(offset);
+  if (keyboardNotes.delete(midi)) noteOff(midi);
 }
 
 function onVolumeInput(event) {
@@ -196,11 +226,18 @@ function onVolumeInput(event) {
   engine.setVolume(value / 100);
 }
 
+function onSynthVolumeInput(event) {
+  const value = Number(event.target.value);
+  synthVolume.value = value;
+  synth.setVolume(value / 100);
+}
+
 watch(playing, syncMotion);
 
 onMounted(() => {
   engine = new Drone();
   synth = new Synth(engine);
+  synth.setVolume(synthVolume.value / 100);
   motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   window.addEventListener('pagehide', stop);
   // 窗口失焦时松键事件可能丢失，统一淡出全部合成器声部。
@@ -279,21 +316,35 @@ onUnmounted(() => {
           </div>
           <div class="mt-8 min-w-0 border-t border-line pt-6 wide:mt-0 wide:border-t-0 wide:pt-0">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-              <h2 class="m-0 text-[14px] font-medium tracking-[2px]">合成器低音 <span class="text-[11px] font-normal tracking-[1px] text-muted">C1–C3</span></h2>
-              <div class="flex rounded-full border border-line p-[3px]" role="group" aria-label="合成器演奏方式">
-                <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors" :class="synthMode === 'latch' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'latch'" @click="setSynthMode('latch')">点击持续</button>
-                <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors" :class="synthMode === 'hold' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'hold'" @click="setSynthMode('hold')">按住发声</button>
+              <h2 class="m-0 text-[14px] font-medium tracking-[2px]">合成器低音</h2>
+              <div class="flex flex-wrap items-center gap-2">
+                <label class="flex items-center gap-1.5 text-[11px] tracking-[1px] text-muted">音域
+                  <select class="rounded-[6px] border border-line bg-[#1c251f] px-2 py-1 text-[11px] tracking-normal text-ink" :value="synthRange" aria-label="合成器起始八度" @change="setSynthRange">
+                    <option v-for="base in SYNTH_RANGES" :key="base" :value="base">{{ rangeLabel(base) }}</option>
+                  </select>
+                </label>
+                <div class="flex rounded-full border border-line p-[3px]" role="group" aria-label="合成器演奏方式">
+                  <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors" :class="synthMode === 'latch' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'latch'" @click="setSynthMode('latch')">点击持续</button>
+                  <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors" :class="synthMode === 'hold' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'hold'" @click="setSynthMode('hold')">按住发声</button>
+                </div>
               </div>
             </div>
-            <div class="relative h-[74px] select-none touch-none mobile:h-[64px] wide:h-[clamp(56px,7.2dvh,84px)]" role="group" aria-label="合成器键盘：C1 到 C3">
-              <div class="flex h-full">
-                <button v-for="key in WHITE_KEYS" :key="key.midi" type="button" class="relative h-full flex-1 rounded-b-[6px] border-r border-bg bg-[#e6dfce] text-[10px] tracking-[.5px] text-[#6b6455] transition-colors duration-100 last:border-r-0 hover:bg-[#f2ecdd] aria-pressed:bg-gold aria-pressed:text-[#3f3524]" :aria-label="`合成器 ${labelFor(key.midi)}`" :aria-pressed="activeNotes.has(key.midi)" @click="pressNote(key.midi)" @pointerdown="holdNote(key.midi)" @pointerup="releaseNote(key.midi)" @pointerleave="releaseNote(key.midi)" @pointercancel="releaseNote(key.midi)" @keydown.enter="keyHold($event, key.midi)" @keydown.space="keyHold($event, key.midi)" @keyup.enter="keyRelease($event, key.midi)" @keyup.space="keyRelease($event, key.midi)">
+            <div class="touch-pan-x [scrollbar-color:#3c463b_transparent] [scrollbar-width:thin] mobile:overflow-x-auto">
+              <div class="relative h-[74px] select-none mobile:h-[64px] mobile:min-w-[480px] wide:h-[clamp(56px,7.2dvh,84px)]" role="group" :aria-label="`合成器键盘：C${synthRange} 到 C${synthRange + 2}`">
+                <div class="flex h-full">
+                <button v-for="key in whiteKeys" :key="key.midi" type="button" class="relative h-full flex-1 rounded-b-[6px] border-r border-bg bg-[#e6dfce] text-[10px] tracking-[.5px] text-[#6b6455] transition-colors duration-100 last:border-r-0 hover:bg-[#f2ecdd] aria-pressed:bg-gold aria-pressed:text-[#3f3524]" :aria-label="`合成器 ${labelFor(key.midi)}`" :aria-pressed="activeNotes.has(key.midi)" @click="pressNote(key.midi)" @pointerdown="holdNote($event, key.midi)" @pointerup="releaseNote(key.midi)" @pointerleave="releaseNote(key.midi)" @pointercancel="releaseNote(key.midi)" @keydown.enter="keyHold($event, key.midi)" @keydown.space="keyHold($event, key.midi)" @keyup.enter="keyRelease($event, key.midi)" @keyup.space="keyRelease($event, key.midi)">
                   <span class="pointer-events-none absolute inset-x-0 bottom-1.5 text-center">{{ key.midi % 12 === 0 ? labelFor(key.midi) : '' }}</span>
                 </button>
               </div>
-              <button v-for="key in BLACK_KEYS" :key="key.midi" type="button" class="absolute top-0 z-[1] h-[60%] w-[4.1%] -translate-x-1/2 rounded-b-[4px] bg-[#1a231d] shadow-[0_3px_6px_#00000066] transition-colors duration-100 before:absolute before:-inset-x-1.5 before:inset-y-0 before:content-[''] hover:bg-[#2b382f] focus-visible:z-[2] aria-pressed:bg-gold" :style="{ left: `${key.left}%` }" :aria-label="`合成器 ${labelFor(key.midi)}`" :aria-pressed="activeNotes.has(key.midi)" @click="pressNote(key.midi)" @pointerdown="holdNote(key.midi)" @pointerup="releaseNote(key.midi)" @pointerleave="releaseNote(key.midi)" @pointercancel="releaseNote(key.midi)" @keydown.enter="keyHold($event, key.midi)" @keydown.space="keyHold($event, key.midi)" @keyup.enter="keyRelease($event, key.midi)" @keyup.space="keyRelease($event, key.midi)" />
+              <button v-for="key in blackKeys" :key="key.midi" type="button" class="absolute top-0 z-[1] h-[60%] w-[4.1%] -translate-x-1/2 rounded-b-[4px] bg-[#1a231d] shadow-[0_3px_6px_#00000066] transition-colors duration-100 before:absolute before:-inset-x-1.5 before:inset-y-0 before:content-[''] hover:bg-[#2b382f] focus-visible:z-[2] aria-pressed:bg-gold" :style="{ left: `${key.left}%` }" :aria-label="`合成器 ${labelFor(key.midi)}`" :aria-pressed="activeNotes.has(key.midi)" @click="pressNote(key.midi)" @pointerdown="holdNote($event, key.midi)" @pointerup="releaseNote(key.midi)" @pointerleave="releaseNote(key.midi)" @pointercancel="releaseNote(key.midi)" @keydown.enter="keyHold($event, key.midi)" @keydown.space="keyHold($event, key.midi)" @keyup.enter="keyRelease($event, key.midi)" @keyup.space="keyRelease($event, key.midi)" />
+              </div>
             </div>
-            <p class="mt-2.5 text-[10px] leading-[1.7] tracking-[1px] text-muted">电脑键盘：Z–M 低音区，Q–U 高音区，I 为最高音 C3</p>
+            <div class="mt-3 flex items-center gap-3 text-[11px] text-muted">
+              <label class="whitespace-nowrap" for="synth-volume">合成器音量</label>
+              <input id="synth-volume" class="volume-range flex-1" type="range" min="0" max="100" :value="synthVolume" :style="{ '--fill': `${synthVolume}%` }" aria-label="合成器音量" @input="onSynthVolumeInput" />
+              <output class="w-9 text-right [font-variant-numeric:tabular-nums]" for="synth-volume">{{ synthVolume }}%</output>
+            </div>
+            <p class="mt-2.5 text-[10px] leading-[1.7] tracking-[1px] text-muted">电脑键盘：Z–M 低音区，Q–U 高音区，I 为最高音 {{ topNote }}</p>
           </div>
         </div>
         <div class="mt-6 flex justify-between border-t border-line pt-4 text-[11px] tracking-[1px] text-muted wide:mt-[clamp(12px,1.6dvh,20px)] wide:pt-3"><span>25 分钟完整录音 · 循环播放</span><span>建议佩戴耳机</span></div>
@@ -303,7 +354,7 @@ onUnmounted(() => {
     <aside id="credits" :hidden="!infoOpen" class="fixed right-[6%] top-[90px] z-10 max-w-[380px] rounded-xl border border-[#6d775b] bg-[#202a23] p-6 text-[14px] leading-[1.9] shadow-[0_20px_90px_#0008] mobile:left-[6%] mobile:max-w-none" aria-labelledby="credits-title">
       <div class="flex items-center justify-between"><h2 id="credits-title" class="m-0 text-[18px]">关于音源</h2><button class="border-0 bg-transparent text-[28px] text-ink" aria-label="关闭音源说明" @click="infoOpen = false">×</button></div>
       <p class="my-[1em] text-[#c1c9bf]">十二个调各自播放完整约 25 分钟录音，原速播放，循环共鸣。首次播放需要点击按钮。切换调性时，声音平滑过渡。</p>
-      <p class="my-[1em] text-[#c1c9bf]">合成器低音 C1–C3 可与任意调叠加，音量与 Tanpura 共用。</p>
+      <p class="my-[1em] text-[#c1c9bf]">合成器低音可在 C0 到 C5 之间切换起始八度，与任意调叠加，音量独立调节。</p>
     </aside>
   </div>
 </template>

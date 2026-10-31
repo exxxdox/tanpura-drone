@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Synth, SYNTH_KEYS, SYNTH_KEY_MAP, SYNTH_NOTES, synthFrequency } from '../src/synth.js';
+import { Synth, SYNTH_KEY_MAP, SYNTH_RANGES, synthFrequency, synthKeys, synthNotes } from '../src/synth.js';
 
 function param(initial = 0) {
   return {
@@ -8,6 +8,7 @@ function param(initial = 0) {
     setValueAtTime(value) { this.value = value; },
     linearRampToValueAtTime(value) { this.value = value; },
     exponentialRampToValueAtTime(value) { this.value = value; },
+    setTargetAtTime(value) { this.value = value; },
     cancelScheduledValues() {},
   };
 }
@@ -18,7 +19,11 @@ function setup(t) {
     currentTime: 0,
     resume: async () => {},
     createGain() {
-      const node = { gain: param(), connect() {}, disconnect() { this.disconnected = true; } };
+      const node = {
+        gain: param(),
+        connect(target) { this.destination = target; },
+        disconnect() { this.disconnected = true; },
+      };
       created.gains.push(node);
       return node;
     },
@@ -51,23 +56,32 @@ function setup(t) {
     },
   };
   const master = { gain: param(), connect() {}, disconnect() {} };
-  const drone = { context, master, ensure() { return context; } };
+  const analyser = { connect() {}, disconnect() {} };
+  const drone = { context, master, analyser, ensure() { return context; } };
   const synth = new Synth(drone);
   t.after(() => synth.dispose());
   return { synth, drone, created };
 }
 
-test('合成器键盘覆盖 C1 到 C3 共 25 个半音', () => {
-  assert.equal(SYNTH_NOTES.length, 25);
-  assert.equal(SYNTH_NOTES[0], 24);
-  assert.equal(SYNTH_NOTES.at(-1), 48);
-  assert.equal(SYNTH_KEYS.filter(key => !key.black).length, 15);
-  assert.equal(SYNTH_KEYS.filter(key => key.black).length, 10);
+test('合成器键盘可切换起始八度，每组覆盖两个八度共 25 个半音', () => {
+  assert.deepEqual(SYNTH_RANGES, [0, 1, 2, 3, 4, 5]);
+  const standard = synthNotes(1);
+  assert.equal(standard.length, 25);
+  assert.equal(standard[0], 24);
+  assert.equal(standard.at(-1), 48);
+  assert.equal(synthNotes(0)[0], 12);
+  assert.equal(synthNotes(3).at(-1), 72);
+  const keys = synthKeys(1);
+  assert.equal(keys.filter(key => !key.black).length, 15);
+  assert.equal(keys.filter(key => key.black).length, 10);
+  const sharp = keys.find(key => key.midi === 25);
+  assert.ok(Math.abs(sharp.left - 100 / 15) < .001);
   assert.ok(Math.abs(synthFrequency(24) - 32.7) < .1);
   assert.ok(Math.abs(synthFrequency(36) - 65.4) < .1);
   assert.ok(Math.abs(synthFrequency(48) - 130.81) < .1);
   assert.equal(Object.keys(SYNTH_KEY_MAP).length, 25);
-  assert.deepEqual(new Set(Object.values(SYNTH_KEY_MAP)), new Set(SYNTH_NOTES));
+  // 键位映射存的是音域内偏移，切换八度后同一按键换到对应音高。
+  assert.deepEqual(new Set(Object.values(SYNTH_KEY_MAP)), new Set(Array.from({ length: 25 }, (_, index) => index)));
 });
 
 test('按键创建共享主音量的声部，重复按键不叠加', t => {
@@ -75,7 +89,8 @@ test('按键创建共享主音量的声部，重复按键不叠加', t => {
   assert.equal(synth.noteOn(24), true);
   assert.equal(created.compressors.length, 1);
   assert.equal(created.compressors[0].threshold.value, -18);
-  assert.equal(created.compressors[0].destination, drone.master);
+  assert.equal(created.compressors[0].destination, synth.level);
+  assert.equal(synth.level.destination, drone.analyser);
   const voice = synth.voices.get(24);
   assert.equal(voice.oscillators.length, 2);
   const frequencies = voice.oscillators.map(oscillator => oscillator.frequency.value).sort((a, b) => a - b);
@@ -84,9 +99,23 @@ test('按键创建共享主音量的声部，重复按键不叠加', t => {
   assert.ok(voice.oscillators.every(oscillator => oscillator.started));
   assert.equal(synth.noteOn(24), false);
   assert.equal(created.oscillators.length, 2);
-  assert.equal(synth.noteOn(23), false);
-  assert.equal(synth.noteOn(49), false);
+  // 任意音域的合法 MIDI 音都可叠加，越界与非整数被拒绝。
+  assert.equal(synth.noteOn(12), true);
   assert.equal(synth.noteOn(24.5), false);
+  assert.equal(synth.noteOn(-1), false);
+  assert.equal(synth.noteOn(128), false);
+});
+
+test('合成器音量独立于 Tanpura 主音量', t => {
+  const { synth, drone } = setup(t);
+  synth.noteOn(24);
+  synth.setVolume(.45);
+  assert.equal(synth.level.gain.value, .45);
+  assert.equal(drone.master.gain.value, 0);
+  synth.setVolume(2);
+  assert.equal(synth.level.gain.value, 1);
+  synth.setVolume(-1);
+  assert.equal(synth.level.gain.value, 0);
 });
 
 test('松开按键淡出后停止并清理声部', t => {
