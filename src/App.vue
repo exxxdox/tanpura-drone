@@ -8,6 +8,8 @@ const ANCHORS = STRING_SHAPES.flatMap(([x]) => [72, 528].map(y => ({ x, y })));
 const basePath = ([x, bow]) => `M${x} 72 C${x + bow} 180 ${x + bow} 420 ${x} 528`;
 const labelFor = midi => `${NOTES[midi % 12]}${Math.floor(midi / 12) - 1}`;
 const rangeLabel = base => `C${base}–C${base + 2}`;
+// 录音从 F♯ 起低一个八度，音区标注须与现有主音频率一致。
+const droneOctave = index => index < 6 ? 3 : 2;
 
 let engine;
 let synth;
@@ -314,7 +316,7 @@ onUnmounted(() => {
           <div class="min-w-0">
             <div class="mb-[19px] flex items-center justify-between mobile:mb-3 wide:mb-[clamp(12px,1.5dvh,20px)]"><h2 class="m-0 text-[14px] font-medium tracking-[2px]">选择你的调</h2><span class="text-[11px] tracking-[1px] text-muted">主音 / Sa</span></div>
             <div id="keys" class="grid grid-cols-12 gap-[9px] mobile:grid-cols-6 mobile:gap-2" role="group" aria-label="十二个调">
-              <button v-for="(key, index) in NOTES" :key="key" type="button" class="relative h-[63px] rounded-[7px] border border-[#3c463b] bg-[#1c251f] font-pitch text-[22px] text-[#bcc5bb] transition-[transform,background,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-gold hover:bg-[#30372a] hover:text-gold aria-pressed:border-gold aria-pressed:bg-gold aria-pressed:text-[#182019] aria-pressed:shadow-[0_4px_25px_#dfbd8120] aria-pressed:after:absolute aria-pressed:after:bottom-[7px] aria-pressed:after:left-[calc(50%_-_2px)] aria-pressed:after:h-1 aria-pressed:after:w-1 aria-pressed:after:rounded-full aria-pressed:after:bg-[#3a412f] aria-pressed:after:content-[''] mobile:h-[52px] wide:h-[clamp(48px,5dvh,64px)]" :aria-label="`${key} 调`" :aria-pressed="index === selected" @click="selectKey(index)">{{ key[0] }}<small v-if="key.length > 1" class="ml-px align-super text-[13px]">♯</small></button>
+              <button v-for="(key, index) in NOTES" :key="key" type="button" class="relative h-[63px] rounded-[7px] border border-[#3c463b] bg-[#1c251f] font-pitch text-[22px] text-[#bcc5bb] transition-[transform,background,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-gold hover:bg-[#30372a] hover:text-gold aria-pressed:border-gold aria-pressed:bg-gold aria-pressed:text-[#182019] aria-pressed:shadow-[0_4px_25px_#dfbd8120] aria-pressed:after:absolute aria-pressed:after:bottom-[7px] aria-pressed:after:left-[calc(50%_-_2px)] aria-pressed:after:h-1 aria-pressed:after:w-1 aria-pressed:after:rounded-full aria-pressed:after:bg-[#3a412f] aria-pressed:after:content-[''] mobile:h-[52px] wide:h-[clamp(48px,5dvh,64px)]" :aria-label="`${key}${droneOctave(index)} 调`" :aria-pressed="index === selected" @click="selectKey(index)">{{ key[0] }}<small v-if="key.length > 1" class="ml-px align-super text-[13px]">♯</small>{{ droneOctave(index) }}</button>
             </div>
             <div class="mx-auto mb-[22px] mt-7 flex max-w-[440px] items-center gap-[18px] text-[12px] text-muted mobile:mx-0 mobile:mb-5 mobile:mt-[25px] wide:my-[clamp(14px,2dvh,24px)]">
               <label class="flex items-center gap-[9px] whitespace-nowrap" for="volume"><svg class="h-4 w-4 fill-none stroke-current [stroke-width:1.5]" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Zm4 3q5 4 0 8m3-11q8 7 0 14" /></svg>音量</label>
