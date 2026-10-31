@@ -2,99 +2,101 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { NOTES, frequencyFor, Drone } from '../src/audio-engine.js';
 
-function setup(t) {
-  const sources = [];
-  const requests = [];
+function setup(t, pending = false) {
+  const audios = [];
+  const original = globalThis.Audio;
+  globalThis.Audio = class {
+    constructor(src) { this.src = src; this.originalSrc = src; this.paused = true; this.currentTime = 0; audios.push(this); }
+    play() {
+      this.paused = false;
+      if (!pending) return Promise.resolve();
+      return new Promise((resolve, reject) => { this.resolve = resolve; this.reject = reject; });
+    }
+    pause() { this.paused = true; }
+    removeAttribute() { this.src = ''; }
+    load() { this.released = true; }
+  };
+  const nodes = [];
+  // 不提供 cancelAndHoldAtTime，保持 Firefox/Zen 的兼容性回归条件。
+  const gain = () => ({ gain: { value: .4, cancelScheduledValues() {}, setValueAtTime() {}, linearRampToValueAtTime() {}, setTargetAtTime(value) { this.value = value; } }, connect() {}, disconnect() { this.disconnected = true; } });
   const drone = new Drone();
-  // 刻意不提供 cancelAndHoldAtTime，覆盖 Firefox/Zen 兼容性。
-  const gain = () => ({ gain: { value: .4, setValueAtTime() {}, linearRampToValueAtTime() {}, cancelScheduledValues() {}, setTargetAtTime() {} }, connect() {}, disconnect() {} });
-  drone.context = { currentTime: 0, resume: async () => {}, close: async () => {}, createGain: gain,
-    decodeAudioData: async bytes => ({ duration: 60, key: bytes }), createBufferSource() {
-      const source = { playbackRate: {}, connect() { return { connect() {} }; }, start(...args) { this.started = args; }, stop(time) { this.stopped = time; }, disconnect() {} };
-      sources.push(source); return source;
-    } };
-  t.mock.method(globalThis, 'fetch', url => new Promise((resolve, reject) => requests.push({ url, resolve, reject })));
-  t.after(() => drone.dispose());
-  return { drone, sources, requests };
+  drone.context = {
+    currentTime: 0, resume: async () => {}, close: async () => { drone.closed = true; },
+    createGain: gain,
+    createAnalyser: () => ({ connect() {}, getFloatTimeDomainData(data) { data.fill(.1); } }),
+    createMediaElementSource(audio) { const node = { audio, connect() {}, disconnect() { this.disconnected = true; } }; nodes.push(node); return node; },
+  };
+  t.after(async () => { await drone.dispose(); if (original) globalThis.Audio = original; else delete globalThis.Audio; });
+  return { drone, audios, nodes };
 }
-const tick = () => new Promise(resolve => setImmediate(resolve));
-const response = key => ({ ok: true, arrayBuffer: async () => key });
 
-test('十二调使用独立录音、来源八度和原速播放，缓存限制为两调', async t => {
-  const { drone, sources, requests } = setup(t);
+test('十二调完整媒体源各自流式播放，原速并自动循环', async t => {
+  const { drone, audios } = setup(t);
   assert.equal(new Set(NOTES).size, 12);
   assert.equal(frequencyFor(6), 92.5);
   assert.equal(frequencyFor(9), 110);
-  for (let index = 0; index < 12; index++) {
-    const playing = drone.play(index);
-    await tick();
-    requests[index].resolve(response(index));
-    assert.equal(await playing, true);
-    assert.ok(drone.buffers.size <= 2);
-  }
-  assert.equal(new Set(requests.map(request => request.url)).size, 12);
-  assert.equal(requests[1].url, '/audio/db-tanpura.mp3');
-  assert.deepEqual([...drone.buffers.keys()], [10, 11]);
-  assert.ok(sources.every(source => source.playbackRate.value === 1));
+  for (let index = 0; index < 12; index++) assert.equal(await drone.play(index), true);
+  assert.equal(audios.length, 12);
+  assert.equal(new Set(audios.map(audio => audio.originalSrc)).size, 12);
+  assert.equal(audios[1].originalSrc, '/audio/db-tanpura.mp3');
+  assert.equal(drone.active.audio.src, '/audio/b-tanpura.mp3');
+  assert.ok(audios.every(audio => audio.loop && audio.playbackRate === 1 && audio.preload === 'metadata'));
 });
 
-test('循环重叠，暂停取消当前和未来声音，连续暂停不重排旧包络', async t => {
-  const { drone, sources, requests } = setup(t);
+test('暂停立即停止所有媒体，同调恢复保留播放位置', async t => {
+  const { drone, audios } = setup(t);
+  await drone.play(0);
+  audios[0].currentTime = 72;
+  drone.stop();
+  assert.ok(audios[0].paused);
+  assert.equal(drone.getEnergy(), 0);
+  assert.equal(await drone.play(0), true);
+  assert.equal(audios.length, 1);
+  assert.equal(audios[0].currentTime, 72);
+  assert.equal(audios[0].paused, false);
+});
+
+test('暂停作废待加载播放，晚完成不会重新发声', async t => {
+  const { drone, audios } = setup(t, true);
   const playing = drone.play(0);
-  await tick(); requests[0].resolve(response(0)); await playing;
-  assert.equal(sources.length, 2);
-  assert.equal(sources[0].started[1], 0);
-  assert.ok(sources[1].started[0] < sources[0].stopped);
-  drone.context.currentTime = 1;
   drone.stop();
-  assert.equal(sources[0].stopped, 1.31);
-  assert.equal(sources[1].stopped, 1);
+  audios[0].resolve();
+  assert.equal(await playing, false);
+  assert.equal(audios[0].paused, true);
+  assert.equal(audios[0].released, true);
   assert.equal(drone.voices.size, 0);
-  drone.stop();
-  assert.equal(sources[0].stopped, 1.31);
 });
 
-test('旧请求晚完成不能替换新调，暂停令待加载请求失效', async t => {
-  const { drone, sources, requests } = setup(t);
-  const first = drone.play(0); await tick();
-  const second = drone.play(1); await tick();
-  requests[1].resolve(response(1));
-  assert.equal(await second, true);
-  requests[0].resolve(response(0));
-  assert.equal(await first, false);
-  assert.equal(sources.length, 2);
-  assert.ok(sources.every(source => source.buffer.key === 1));
-  const pending = drone.play(2); await tick();
-  drone.stop();
-  requests[2].resolve(response(2));
-  assert.equal(await pending, false);
-  assert.equal(sources.length, 2);
-});
-
-test('解码期间暂停不会复活，过期错误不影响新请求', async t => {
-  const { drone, sources, requests } = setup(t);
-  let finishDecode;
-  drone.context.decodeAudioData = () => new Promise(resolve => { finishDecode = resolve; });
-  const pending = drone.play(0); await tick();
-  requests[0].resolve(response(0)); await tick();
-  drone.stop(); finishDecode({ duration: 60 });
-  assert.equal(await pending, false);
-  assert.equal(sources.length, 0);
-  drone.context.decodeAudioData = async () => ({ duration: 60 });
-  const old = drone.play(1); await tick();
-  const current = drone.play(2); await tick();
-  requests[1].reject(new Error('old failed'));
-  assert.equal(await old, false);
-  requests[2].resolve(response(2));
+test('旧调晚返回不能覆盖新调，过期错误也不会覆盖新请求', async t => {
+  const { drone, audios } = setup(t, true);
+  const old = drone.play(0);
+  const current = drone.play(1);
+  audios[1].resolve();
   assert.equal(await current, true);
+  audios[0].resolve();
+  assert.equal(await old, false);
+  assert.equal(drone.active.index, 1);
+  assert.equal(audios[1].paused, false);
+  const failed = drone.play(2);
+  const latest = drone.play(3);
+  audios[2].reject(new Error('cancelled'));
+  assert.equal(await failed, false);
+  audios[3].resolve();
+  assert.equal(await latest, true);
 });
 
-test('新音源加载失败保留旧声音，错误可重试', async t => {
-  const { drone, requests, sources } = setup(t);
-  const first = drone.play(0); await tick(); requests[0].resolve(response(0)); await first;
-  const stopped = sources[0].stopped;
-  const failed = drone.play(1); await tick(); requests[1].resolve({ ok: false });
-  await assert.rejects(failed, /音源加载失败/);
-  assert.equal(sources[0].stopped, stopped);
-  assert.equal(drone.voices.size, 2);
+test('能量来自真实 analyser，静音和 dispose 清理全部资源', async t => {
+  const { drone, audios, nodes } = setup(t);
+  assert.equal(drone.getEnergy(), 0);
+  await drone.play(0);
+  assert.ok(Math.abs(drone.getEnergy() - .4) < .0001);
+  drone.setVolume(0);
+  assert.equal(drone.getEnergy(), 0);
+  assert.equal(drone.master.gain.value, 0);
+  await drone.dispose();
+  assert.equal(drone.voices.size, 0);
+  assert.ok(audios.every(audio => audio.paused && audio.released));
+  assert.ok(nodes.every(node => node.disconnected));
+  assert.equal(drone.closed, true);
+  assert.equal(await drone.play(1), false);
 });

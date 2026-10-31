@@ -1,115 +1,130 @@
 export const NOTES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
 const FILES = ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b'];
-// 使用来源页面的实际八度，F♯ 起为低八度，不再从 C 调计算变调。
+// 来源 F♯ 起使用低八度，各调直接播放对应录音，不做变调。
 const FREQUENCIES = [130.8, 138.6, 146.8, 155.6, 164.8, 174.6, 92.5, 98, 103.8, 110, 116.5, 123.5];
 export const frequencyFor = index => FREQUENCIES[index];
 
 export class Drone {
   context;
   master;
-  buffers = new Map();
+  analyser;
+  samples;
+  active;
   voices = new Set();
-  timer;
   generation = 0;
   volume = .65;
   disposed = false;
+  running = false;
 
   async play(index) {
     if (!Number.isInteger(index) || index < 0 || index >= NOTES.length) throw new RangeError('无效调性');
     if (this.disposed) return false;
     const generation = ++this.generation;
+    // 新请求取消尚未就绪或正在退场的旧播放器，仅保留当前声音。
+    for (const voice of this.voices) if (voice !== this.active) this.release(voice);
+    let voice;
     try {
       this.context ??= new AudioContext();
-      // 点击事件内先恢复音频，下载和解码不应消耗移动端手势授权。
-      await this.context.resume();
-      if (generation !== this.generation) return false;
       if (!this.master) {
         this.master = this.context.createGain();
         this.master.gain.value = this.volume * .7;
-        this.master.connect(this.context.destination);
+        this.analyser = this.context.createAnalyser();
+        this.analyser.fftSize = 256;
+        this.samples = new Float32Array(this.analyser.fftSize);
+        this.master.connect(this.analyser);
+        this.analyser.connect(this.context.destination);
       }
-      let buffer = this.buffers.get(index);
-      if (!buffer) {
-        const response = await fetch(`/audio/${FILES[index]}-tanpura.mp3`);
-        if (!response.ok) throw new Error('音源加载失败，请重试');
-        const bytes = await response.arrayBuffer();
-        if (generation !== this.generation) return false;
-        buffer = await this.context.decodeAudioData(bytes);
-        if (generation !== this.generation) return false;
-        if (!Number.isFinite(buffer.duration) || buffer.duration <= 3) throw new Error('音源时长无效');
+      // 流式解码完整录音，不把 25 分钟音频全部展开为 PCM 缓存。
+      voice = this.active?.index === index ? this.active : this.createVoice(index);
+      voice.generation = generation;
+      // 两个调用都在点击事件内启动，保留移动端的播放手势授权。
+      const resumed = this.context.resume();
+      const started = voice.audio.play();
+      await Promise.all([resumed, started]);
+      if (generation !== this.generation) {
+        if (voice.generation === generation) voice.audio.pause();
+        if (voice !== this.active) this.release(voice);
+        return false;
       }
-      // 只保留最近两调的解码数据，避免移动端缓存十二份 PCM。
-      this.buffers.delete(index);
-      this.buffers.set(index, buffer);
-      while (this.buffers.size > 2) this.buffers.delete(this.buffers.keys().next().value);
-      this.halt();
-      this.start(buffer);
+      const previous = this.active;
+      this.active = voice;
+      this.running = true;
+      const now = this.context.currentTime;
+      voice.gain.gain.cancelScheduledValues(now);
+      voice.gain.gain.setValueAtTime(0, now);
+      voice.gain.gain.linearRampToValueAtTime(1, now + .3);
+      if (previous && previous !== voice) {
+        // 新调准备好后才淡出旧调，等待网络时不会突然断音。
+        const level = previous.gain.gain.value;
+        previous.gain.gain.cancelScheduledValues(now);
+        previous.gain.gain.setValueAtTime(level, now);
+        previous.gain.gain.linearRampToValueAtTime(0, now + .3);
+        previous.timer = setTimeout(() => this.release(previous), 320);
+      }
       return true;
     } catch (error) {
-      // 过期请求失败不能覆盖新调或暂停后的界面状态。
+      if (voice && voice !== this.active) this.release(voice);
       if (generation !== this.generation) return false;
       throw error;
     }
   }
 
+  createVoice(index) {
+    const audio = new Audio(`/audio/${FILES[index]}-tanpura.mp3`);
+    audio.preload = 'metadata';
+    audio.loop = true;
+    audio.playbackRate = 1;
+    const source = this.context.createMediaElementSource(audio);
+    const gain = this.context.createGain();
+    gain.gain.value = 0;
+    source.connect(gain);
+    gain.connect(this.master);
+    const voice = { index, audio, source, gain };
+    this.voices.add(voice);
+    return voice;
+  }
+
+  release(voice) {
+    if (!this.voices.delete(voice)) return;
+    clearTimeout(voice.timer);
+    voice.audio.pause();
+    voice.source.disconnect();
+    voice.gain.disconnect();
+    // 丢弃旧调的媒体资源和未完成下载，快速切调不会累积播放器。
+    voice.audio.removeAttribute('src');
+    voice.audio.load();
+  }
+
   setVolume(value) {
-    this.volume = value;
-    if (this.master) this.master.gain.setTargetAtTime(value * .7, this.context.currentTime, .06);
+    this.volume = Math.max(0, Math.min(1, value));
+    if (this.master) this.master.gain.setTargetAtTime(this.volume * .7, this.context.currentTime, .06);
   }
 
-  start(buffer) {
-    const duration = buffer.duration;
-    const fade = 1.5;
-    let next = this.context.currentTime + .04;
-    const schedule = () => {
-      // 按音频时钟提前排程，缓冲后台标签页的定时器延迟。
-      while (next < this.context.currentTime + 100) {
-        const source = this.context.createBufferSource();
-        const gain = this.context.createGain();
-        source.buffer = buffer;
-        source.playbackRate.value = 1;
-        source.connect(gain).connect(this.master);
-        gain.gain.setValueAtTime(0, next);
-        gain.gain.linearRampToValueAtTime(1, next + fade);
-        gain.gain.setValueAtTime(1, next + duration - fade);
-        gain.gain.linearRampToValueAtTime(0, next + duration);
-        const voice = { source, gain, at: next };
-        this.voices.add(voice);
-        source.onended = () => { this.voices.delete(voice); source.disconnect(); gain.disconnect(); };
-        source.start(next, 0, duration);
-        source.stop(next + duration);
-        next += duration - fade;
-      }
-    };
-    schedule();
-    this.timer = setInterval(schedule, 1000);
-  }
-
-  halt() {
-    clearInterval(this.timer);
-    if (!this.context) return;
-    const now = this.context.currentTime;
-    for (const { source, gain, at } of this.voices) {
-      // Firefox/Zen 缺少 cancelAndHoldAtTime，保存音量后使用通用 API 淡出。
-      const level = gain.gain.value;
-      gain.gain.cancelScheduledValues(now);
-      gain.gain.setValueAtTime(level, now);
-      gain.gain.linearRampToValueAtTime(0, now + .3);
-      source.stop(at > now ? now : now + .31);
-    }
-    this.voices.clear();
+  getEnergy() {
+    if (!this.running || !this.analyser || this.volume === 0) return 0;
+    this.analyser.getFloatTimeDomainData(this.samples);
+    let squares = 0;
+    for (const sample of this.samples) squares += sample * sample;
+    return Math.min(1, Math.sqrt(squares / this.samples.length) * 4);
   }
 
   stop() {
-    // 暂停同时作废下载和解码，防止晚返回的音源重新发声。
+    // 暂停立即静音并作废待加载请求，同调保留当前位置供再次播放。
     ++this.generation;
-    this.halt();
+    this.running = false;
+    for (const voice of this.voices) {
+      clearTimeout(voice.timer);
+      voice.audio.pause();
+      if (voice !== this.active) this.release(voice);
+    }
   }
 
   dispose() {
+    if (this.disposed) return;
     this.disposed = true;
     this.stop();
-    this.buffers.clear();
+    for (const voice of this.voices) this.release(voice);
+    this.active = undefined;
     return this.context?.close();
   }
 }

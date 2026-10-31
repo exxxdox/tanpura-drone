@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Drone, NOTES, frequencyFor } from './audio-engine.js';
+const STRING_SHAPES = [[230, -38], [275, -16], [325, 16], [370, 38]];
 
 export default function App() {
   const drone = useRef(null);
   const playButton = useRef(null);
+  const scene = useRef(null);
+  const strings = useRef([]);
   const request = useRef(0);
   const intent = useRef(false);
   const [selected, setSelected] = useState(0);
@@ -41,6 +44,42 @@ export default function App() {
       document.removeEventListener('keydown', onKey);
     };
   }, []);
+
+  useEffect(() => {
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let frame;
+    let energy = 0;
+    const reset = () => {
+      scene.current?.style.setProperty('--energy', '0');
+      scene.current?.parentElement.style.setProperty('--energy', '0');
+      strings.current.forEach((path, index) => {
+        const [x, bow] = STRING_SHAPES[index];
+        path?.setAttribute('d', `M${x} 72 C${x + bow} 180 ${x + bow} 420 ${x} 528`);
+      });
+    };
+    const draw = time => {
+      // 直接更新 SVG 与 CSS 变量，不让逐帧音量采样触发 React 重渲染。
+      const level = Math.min(1, (drone.current?.getEnergy() ?? 0) * 2.8);
+      energy += (level - energy) * .14;
+      scene.current?.style.setProperty('--energy', energy.toFixed(3));
+      scene.current?.parentElement.style.setProperty('--energy', energy.toFixed(3));
+      strings.current.forEach((path, index) => {
+        const [x, bow] = STRING_SHAPES[index];
+        const vibration = Math.sin(time * (.014 + index * .002) + index * 1.7) * energy * (13 + index * 3);
+        path?.setAttribute('d', `M${x} 72 C${x + bow + vibration} 180 ${x + bow - vibration} 420 ${x} 528`);
+      });
+      frame = requestAnimationFrame(draw);
+    };
+    const update = () => {
+      cancelAnimationFrame(frame);
+      reset();
+      // 遵循系统减少动态效果设置，暂停时也完全停止逐帧采样。
+      if (playing && !motion.matches) frame = requestAnimationFrame(draw);
+    };
+    update();
+    motion.addEventListener('change', update);
+    return () => { cancelAnimationFrame(frame); motion.removeEventListener('change', update); reset(); };
+  }, [playing]);
 
   async function play(index) {
     const current = ++request.current;
@@ -99,12 +138,15 @@ export default function App() {
         <div className="intro-bottom"><span className="tiny-orbit">✳</span><span>十二个调 · 无限共鸣</span></div>
       </section>
       <section className="instrument" aria-label="Tanpura 播放器">
-        <div className="orbit-scene" id="scene">
+        <div ref={scene} className="orbit-scene" id="scene">
+          <div className="resonance-halo" aria-hidden="true" />
+          <div className="resonance-wave wave-one" aria-hidden="true" /><div className="resonance-wave wave-two" aria-hidden="true" />
           <div className="orbit orbit-outer" /><div className="orbit orbit-middle" /><div className="orbit orbit-inner" />
           <div className="orbit-label top">共 鸣</div><div className="orbit-label bottom">Pa · Sa · Sa · Sa</div>
           <svg className="strings" viewBox="0 0 600 600" aria-hidden="true">
             <defs><linearGradient id="thread"><stop stopColor="#c5a46b" stopOpacity="0" /><stop offset=".5" stopColor="#e8c78c" /><stop offset="1" stopColor="#c5a46b" stopOpacity="0" /></linearGradient></defs>
-            <g fill="none" stroke="url(#thread)">{[190, 235, 280, 320, 365, 410].map(x => <path key={x} d={`M300 20 Q${x} 300 300 580`} />)}</g>
+            <g fill="none" stroke="url(#thread)">{STRING_SHAPES.map(([x, bow], index) => <path ref={element => { strings.current[index] = element; }} key={x} d={`M${x} 72 C${x + bow} 180 ${x + bow} 420 ${x} 528`} />)}</g>
+            <g className="string-anchors" fill="#dfbd81">{STRING_SHAPES.flatMap(([x]) => [72, 528].map(y => <circle key={`${x}-${y}`} cx={x} cy={y} r="2" />))}</g>
           </svg>
           <div className="pitch-display"><span className="pitch-kicker">当前主音</span><div id="pitch">{note[0]}<span>{note.length > 1 ? '♯' : '♮'}</span></div><span id="frequency">≈ {frequencyFor(selected).toFixed(1)} Hz</span></div>
           <button ref={playButton} id="play" className="play" aria-label={active ? '暂停播放' : '开始播放'} aria-pressed={active} aria-busy={loading} onClick={togglePlayback}>
@@ -121,13 +163,13 @@ export default function App() {
           <input id="volume" type="range" min="0" max="100" value={volume} aria-label="音量" onChange={event => { const value = Number(event.target.value); setVolume(value); drone.current.setVolume(value / 100); }} />
           <output id="volume-value" htmlFor="volume">{volume}%</output>
         </div>
-        <div className="control-foot"><span>∞ 持续播放</span><span>建议佩戴耳机</span></div>
+        <div className="control-foot"><span>25 分钟完整录音 · 循环播放</span><span>建议佩戴耳机</span></div>
       </section>
     </main>
     <footer><span>留一点空间，给声音。</span><span className="footer-right">拨弦之后，万物渐静 <span>✦</span></span></footer>
     <aside id="credits" hidden={!infoOpen} aria-labelledby="credits-title">
       <div className="credits-top"><h2 id="credits-title">关于音源</h2><button aria-label="关闭音源说明" onClick={() => setInfoOpen(false)}>×</button></div>
-      <p>十二个调分别使用对应录音的片段，原速播放，循环共鸣。</p>
+      <p>十二个调各自播放完整约 25 分钟录音，原速播放，循环共鸣。</p>
       <p>首次播放需要点击按钮。切换调性时，声音平滑过渡。</p>
     </aside>
   </div>;
