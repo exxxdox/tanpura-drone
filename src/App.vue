@@ -185,8 +185,7 @@ onUnmounted(() => {
     <footer><span>留一点空间，给声音。</span><span class="footer-right">拨弦之后，万物渐静 <span>✦</span></span></footer>
     <aside id="credits" :hidden="!infoOpen" aria-labelledby="credits-title">
       <div class="credits-top"><h2 id="credits-title">关于音源</h2><button aria-label="关闭音源说明" @click="infoOpen = false">×</button></div>
-      <p>十二个调各自播放完整约 25 分钟录音，原速播放，循环共鸣。</p>
-      <p>首次播放需要点击按钮。切换调性时，声音平滑过渡。</p>
+      <p>十二个调各自播放完整约 25 分钟录音，原速播放，循环共鸣。首次播放需要点击按钮。切换调性时，声音平滑过渡。</p>
     </aside>
   </div>
 </template>
