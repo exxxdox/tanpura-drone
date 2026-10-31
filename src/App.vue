@@ -25,7 +25,8 @@ const loading = ref(false);
 const error = ref('');
 const volume = ref(65);
 const infoOpen = ref(false);
-const synthMode = ref('latch');
+// 默认按住发声，避免首次点击留下不易察觉的持续低音。
+const synthMode = ref('hold');
 const synthRange = ref(1);
 const synthVolume = ref(45);
 const activeNotes = ref(new Set());
