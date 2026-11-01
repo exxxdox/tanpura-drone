@@ -332,23 +332,56 @@ onUnmounted(() => {
       <p class="my-[1em] text-[#c1c9bf] english:tracking-normal">{{ text.aboutRecording }}</p>
       <p class="my-[1em] text-[#c1c9bf] english:tracking-normal">{{ text.aboutSynth }}</p>
     </aside>
-    <main class="relative mx-auto grid max-w-[1440px] grid-cols-[1fr_1.6fr] items-center px-[6%] pb-[62px] pt-5 mobile:grid-cols-1 mobile:pt-[22px] wide:w-full wide:max-w-[1800px] wide:min-h-0 wide:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] wide:grid-rows-[minmax(0,1fr)_auto] wide:gap-y-[clamp(16px,2.4dvh,32px)] wide:px-[var(--gutter)] wide:pb-[clamp(18px,3dvh,40px)] wide:pt-0">
+    <main class="relative mx-auto grid max-w-[1440px] grid-cols-[1fr_1.6fr] items-center px-[6%] pb-[62px] pt-5 mobile:grid-cols-1 mobile:pt-[22px] wide:w-full wide:max-w-[1800px] wide:min-h-0 wide:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] wide:grid-rows-[minmax(0,1fr)] wide:gap-x-6 wide:gap-y-[clamp(16px,2.4dvh,32px)] wide:px-[var(--gutter)] wide:pb-[clamp(18px,3dvh,40px)] wide:pt-0">
+      <!-- 左右列独立分配剩余高度，选调展开只挤占左侧介绍区，右侧播放器不随之缩放。 -->
+      <div class="contents wide:flex wide:h-full wide:self-stretch wide:min-h-0 wide:flex-col wide:gap-6">
       <!-- 五度圈增加控制卡高度，矮桌面缩减介绍区，避免标题与页眉重叠。 -->
-      <section class="short:group-data-[layout=circle]:[&_h1]:text-[32px] short:group-data-[layout=circle]:[&_h1]:my-2 short:group-data-[layout=circle]:[&_p]:hidden short:group-data-[layout=circle]:[&>div:last-child]:hidden min-w-0 self-center pt-[5px] mobile:z-[2] english:[container-type:inline-size]">
+      <section class="circle-compact:[&_h1]:text-[32px] circle-compact:[&_h1]:my-2 circle-compact:[&_p]:hidden circle-compact:[&>div:last-child]:hidden order-1 min-w-0 self-center wide:order-none wide:my-auto wide:self-stretch pt-[5px] mobile:z-[2] english:[container-type:inline-size]">
         <div class="flex items-center gap-[10px] text-[12px] tracking-[3px] text-gold mobile:text-[11px] english:tracking-normal"><span class="h-[5px] w-[5px] rounded-full bg-gold" /> {{ text.eyebrow }}</div>
         <!-- 中英文始终按两句分行；小屏中文放大便于阅读，英文按容器宽度缩放以免溢出。 -->
         <h1 class="mb-[22px] mt-6 font-serif text-[clamp(48px,5.8vw,84px)] font-normal leading-[1.5] tracking-[4px] mobile:my-[15px] mobile:text-[clamp(36px,10vw,44px)] mobile:leading-[1.4] mobile:tracking-[2px] wide:my-[clamp(16px,2dvh,28px)] wide:text-[clamp(44px,min(4.8vw,7.4dvh),90px)] wide:leading-[1.4] english:tracking-normal english:text-[min(84px,10cqw)]"><span class="whitespace-nowrap">{{ text.heading1 }}</span><br /><span class="whitespace-nowrap">{{ text.heading2 }}</span></h1>
         <p class="my-[1em] text-[15px] leading-[2.1] tracking-[2px] text-muted mobile:m-0 mobile:text-[13px] mobile:leading-[1.8] short:text-[14px] english:tracking-normal">{{ text.intro1 }}<br class="mobile:hidden" />{{ text.intro2 }}</p>
         <div class="mt-[45px] flex items-center gap-[14px] text-[12px] tracking-[2px] text-muted mobile:hidden wide:mt-[clamp(16px,3dvh,40px)]"><span class="text-[30px] text-gold"><svg class="h-[1em] w-[1em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2v20M2 12h20M5 5l14 14M5 19 19 5" /></svg></span><span>{{ text.twelve }}</span></div>
       </section>
-      <section class="relative min-w-0 mobile:mt-[6px] wide:flex wide:h-full wide:min-h-0 wide:flex-col wide:items-center wide:justify-center" :aria-label="text.player">
-        <!-- 宽屏由行高决定方形尺寸，控制卡变高时场景自动收缩，状态行不会压到下方模块。 -->
-        <div ref="scene" class="short:group-data-[layout=circle]:flex short:group-data-[layout=circle]:aspect-auto short:group-data-[layout=circle]:flex-row short:group-data-[layout=circle]:justify-center short:group-data-[layout=circle]:gap-8 group/scene relative isolate mx-auto grid aspect-square grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] w-[min(100%,570px)] place-items-center [--energy:0] mobile:max-w-[420px] wide:h-full wide:max-h-[740px] wide:min-h-0 wide:w-auto wide:max-w-full wide:flex-1">
+<div class="@container/key-selector order-3 col-span-full mt-[34px] mobile:mt-7 wide:order-none wide:mt-0 wide:shrink-0 wide:group-data-[layout=chromatic]:h-[clamp(320px,32dvh,360px)] wide:group-data-[layout=chromatic]:flex wide:group-data-[layout=chromatic]:flex-col min-w-0 rounded-xl border border-line bg-surface px-[30px] pb-5 pt-[27px] mobile:px-4 mobile:pb-4 mobile:pt-5 wide:p-[clamp(16px,2.2dvh,28px)]">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 class="m-0 text-[14px] font-medium tracking-[2px] english:tracking-normal">{{ text.choose }}</h2>
+              <div class="flex rounded-full border border-line p-[3px]" role="group" :aria-label="text.keyLayout">
+                <button type="button" class="rounded-full px-3 py-[5px] text-[11px] transition-colors" :class="keyLayout === 'chromatic' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="keyLayout === 'chromatic'" @click="keyLayout = 'chromatic'">{{ text.chromatic }}</button>
+                <button type="button" class="rounded-full px-3 py-[5px] text-[11px] transition-colors" :class="keyLayout === 'circle' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="keyLayout === 'circle'" @click="keyLayout = 'circle'">{{ text.circleOfFifths }}</button>
+              </div>
+            </div>
+            <!-- 主调与关系小调共用扇区；内圈仅作关系标注，不暗示额外的小调录音。 -->
+            <svg v-if="keyLayout === 'circle'" class="mx-auto block aspect-square w-[260px] short:w-[220px] max-w-full overflow-visible" viewBox="0 0 260 260" role="group" :aria-label="text.circleOfFifths">
+              <g v-for="sector in CIRCLE_SECTORS" :key="sector.index" class="group/sector cursor-pointer outline-none" role="button" tabindex="0" :aria-label="t('key', { note: `${NOTES[sector.index]}${droneOctave(sector.index)}` })" :aria-pressed="sector.index === selected" @click="selectKey(sector.index)" @keydown.enter.prevent="selectKey(sector.index)" @keydown.space.prevent="selectKey(sector.index)">
+                <path :d="sector.path" class="stroke-[#657060] stroke-1 transition-colors group-focus-visible/sector:stroke-gold group-focus-visible/sector:stroke-[3]" :class="sector.index === selected ? 'fill-gold' : 'fill-[#1c251f] group-hover/sector:fill-[#30372a]'" />
+                <text :x="sector.major[0]" :y="sector.major[1]" text-anchor="middle" dominant-baseline="central" class="pointer-events-none text-[22px]" :class="sector.index === selected ? 'fill-bg' : 'fill-ink'" aria-hidden="true">{{ NOTES[sector.index] }}</text>
+                <text :x="sector.minor[0]" :y="sector.minor[1]" text-anchor="middle" dominant-baseline="central" class="pointer-events-none text-[12px]" :class="sector.index === selected ? 'fill-bg' : 'fill-muted'" aria-hidden="true">{{ sector.minorName }}</text>
+              </g>
+              <circle cx="130" cy="130" r="88" class="pointer-events-none fill-none stroke-[#657060] stroke-1" aria-hidden="true" />
+              <circle cx="130" cy="130" r="128" class="pointer-events-none fill-none stroke-[#89947d] stroke-[2]" aria-hidden="true" />
+            </svg>
+            <!-- 按卡片实际宽度切换六列/十二列，为带降号和八度的音名保留完整空间。 -->
+            <div v-else class="grid grid-cols-6 gap-[9px] @[680px]/key-selector:grid-cols-12 mobile:gap-2" role="group" :aria-label="text.keys">
+              <button v-for="item in displayedKeys" :key="item.index" type="button" class="relative h-[63px] rounded-[7px] border border-[#3c463b] bg-[#1c251f] font-pitch text-[20px] whitespace-nowrap mobile:text-[18px] text-[#bcc5bb] transition-[background,border-color,box-shadow] duration-200 hover:border-gold hover:bg-[#30372a] hover:text-gold aria-pressed:border-gold aria-pressed:bg-gold aria-pressed:text-[#182019] aria-pressed:shadow-[0_4px_25px_#dfbd8120] mobile:h-[52px] wide:h-[clamp(48px,5dvh,64px)]" :aria-label="t('key', { note: `${NOTES[item.index]}${droneOctave(item.index)}` })" :aria-pressed="item.index === selected" @click="selectKey(item.index)">{{ NOTES[item.index][0] }}<small v-if="NOTES[item.index].length > 1" class="ml-px align-super text-[13px]">{{ NOTES[item.index][1] }}</small>{{ droneOctave(item.index) }}</button>
+            </div>
+            <div class="mx-auto mb-[22px] mt-7 flex max-w-[440px] items-center gap-[18px] text-[12px] text-muted mobile:mx-0 mobile:mb-5 mobile:mt-[25px] wide:my-[clamp(14px,2dvh,24px)]">
+              <label class="flex items-center gap-[9px] whitespace-nowrap english:tracking-normal" for="volume"><svg class="h-4 w-4 fill-none stroke-current [stroke-width:1.5]" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Zm4 3q5 4 0 8m3-11q8 7 0 14" /></svg>{{ text.volume }}</label>
+              <input id="volume" class="volume-range" type="range" min="0" max="100" :value="volume" :style="{ '--fill': `${volume}%` }" :aria-label="text.volume" @input="onVolumeInput" />
+              <output id="volume-value" class="w-10 [font-variant-numeric:tabular-nums]" for="volume">{{ volume }}%</output>
+            </div>
+            <div class="wide:group-data-[layout=chromatic]:mt-auto wide:group-data-[layout=chromatic]:pt-3 mt-6 border-t border-line pt-4 text-[11px] tracking-[1px] text-muted wide:mt-[clamp(12px,1.6dvh,20px)] wide:pt-3">{{ text.recording }}</div>
+          </div>
+      </div>
+      <div class="contents wide:flex wide:h-full wide:self-stretch wide:min-h-0 wide:flex-col wide:gap-6">
+      <section class="order-2 wide:order-none relative min-w-0 mobile:mt-[6px] wide:flex wide:flex-1 wide:min-h-0 wide:flex-col wide:items-center wide:justify-center" :aria-label="text.player">
+        <!-- 五度圈下始终按音名、频率、按钮上下排列，只缩放字号，不切换横排。 -->
+        <div ref="scene" class="wide:flex wide:flex-col wide:justify-center wide:gap-3 group/scene relative isolate mx-auto grid aspect-square grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] w-[min(100%,570px)] place-items-center [--energy:0] mobile:max-w-[420px] wide:h-full wide:max-h-[740px] wide:min-h-0 wide:w-auto wide:max-w-full wide:flex-1">
           <div class="pointer-events-none absolute inset-[15%] rounded-full bg-[radial-gradient(ellipse,#dfbd8122,transparent_68%)] opacity-[calc(var(--energy)*.9)] scale-[calc(.9_+_var(--energy)*.22)] motion-reduce:hidden" aria-hidden="true" />
           <div class="pointer-events-none absolute inset-[14%] rounded-full border border-gold opacity-[calc(var(--energy)*.26)] transition-opacity duration-300 scale-[calc(.97_+_var(--energy)*.15)] motion-reduce:hidden" aria-hidden="true" /><div class="pointer-events-none absolute inset-[7%] rounded-full border border-gold opacity-[calc(var(--energy)*.12)] transition-opacity duration-300 scale-[calc(.97_+_var(--energy)*.08)] motion-reduce:hidden" aria-hidden="true" />
           <div class="absolute inset-[3%] rounded-full border border-dashed border-[#b8a57528] transition-shadow duration-1000" /><div class="absolute inset-[10%] rounded-full border border-[#b8a5753b] transition-shadow duration-1000 group-data-[playing=true]:animate-turn before:absolute before:-top-[3px] before:left-1/2 before:h-1.5 before:w-1.5 before:rounded-full before:bg-gold before:shadow-[0_0_15px_#dfbd8177] before:content-[''] after:absolute after:bottom-[-3px] after:left-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-gold after:shadow-[0_0_15px_#dfbd8177] after:content-[''] mobile:before:hidden" /><div class="absolute inset-[17%] rounded-full border border-[#b8a57518] transition-shadow duration-1000 group-data-[playing=true]:opacity-[calc(.4_+_var(--energy)*.6)] group-data-[playing=true]:shadow-[0_0_35px_#dfbd810c,inset_0_0_35px_#dfbd810c] group-hover/scene:border-[#dfbd8155]" />
           <!-- 字间距在末字后也占位，把视觉文字推左半个字距；用相对位移回正到中心竖轴。 -->
-          <div class="short:group-data-[layout=circle]:hidden absolute left-1/2 top-[8%] -translate-x-1/2 bg-bg px-[15px] py-2 text-[11px] tracking-[5px] text-muted mobile:hidden"><span class="relative left-[2.5px] english:tracking-normal">{{ text.resonance }}</span></div><div class="short:group-data-[layout=circle]:hidden absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap bg-bg px-[15px] py-2 text-[11px] tracking-[3px] text-muted"><span class="relative left-[1.5px]">Pa · Sa · Sa · Sa</span></div>
+          <div class="circle-compact:hidden absolute left-1/2 top-[8%] -translate-x-1/2 bg-bg px-[15px] py-2 text-[11px] tracking-[5px] text-muted mobile:hidden"><span class="relative left-[2.5px] english:tracking-normal">{{ text.resonance }}</span></div><div class="circle-compact:hidden absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap bg-bg px-[15px] py-2 text-[11px] tracking-[3px] text-muted"><span class="relative left-[1.5px]">Pa · Sa · Sa · Sa</span></div>
           <svg class="absolute inset-0 h-full w-full opacity-[.36] transition-[opacity,filter] duration-700 group-data-[playing=true]:opacity-[calc(.42_+_var(--energy)*.55)] group-data-[playing=true]:drop-shadow-[0_0_5px_#dfbd8166] group-hover/scene:opacity-[.8]" viewBox="0 0 600 600" aria-hidden="true">
             <defs><linearGradient id="thread"><stop stop-color="#c5a46b" stop-opacity="0" /><stop offset=".5" stop-color="#e8c78c" /><stop offset="1" stop-color="#c5a46b" stop-opacity="0" /></linearGradient></defs>
             <g fill="none" stroke="url(#thread)">
@@ -359,9 +392,9 @@ onUnmounted(() => {
             </g>
           </svg>
           <!-- 主音、频率、圆钮、上下标签统一按几何中心落在场景竖轴；降号绝对定位，不参与字母居中。 -->
-          <div class="short:group-data-[layout=circle]:translate-y-0 row-start-2 z-[1] -translate-y-6 text-center mobile:-translate-y-14 group-data-[playing=true]:drop-shadow-[0_0_18px_#dfbd811a]"><span class="block text-[11px] tracking-[4px] text-muted short:hidden"><span class="relative left-[2px] english:tracking-normal">{{ text.tonic }}</span></span><div class="font-pitch text-[124px] leading-[1.35] text-gold [text-shadow:0_0_70px_#d7b57822] mobile:text-[clamp(78px,26vw,100px)] wide:text-[clamp(78px,13dvh,140px)] short:text-[clamp(68px,11dvh,90px)] short:group-data-[layout=circle]:text-[48px]"><span class="relative inline-block">{{ note[0] }}<span v-if="note.length > 1" class="absolute left-full top-[18.6%] ml-[2px] text-[37px]">{{ note[1] }}</span></span></div><span class="text-[13px] tracking-[2px] text-muted [font-variant-numeric:tabular-nums]"><span class="relative left-[1px]">≈ {{ frequencyFor(selected).toFixed(1) }} Hz</span></span></div>
+          <div class="wide:translate-y-0 row-start-2 z-[1] -translate-y-6 text-center mobile:-translate-y-14 group-data-[playing=true]:drop-shadow-[0_0_18px_#dfbd811a]"><span class="block text-[11px] tracking-[4px] text-muted short:hidden"><span class="relative left-[2px] english:tracking-normal">{{ text.tonic }}</span></span><div class="font-pitch text-[124px] leading-[1.35] text-gold [text-shadow:0_0_70px_#d7b57822] mobile:text-[clamp(78px,26vw,100px)] wide:text-[clamp(78px,13dvh,140px)] short:text-[clamp(68px,11dvh,90px)] wide:text-[clamp(48px,8dvh,110px)] circle-compact:text-[48px] "><span class="relative inline-block">{{ note[0] }}<span v-if="note.length > 1" class="absolute left-full top-[18.6%] ml-[2px] text-[37px]">{{ note[1] }}</span></span></div><span class="text-[13px] tracking-[2px] text-muted [font-variant-numeric:tabular-nums]"><span class="relative left-[1px]">≈ {{ frequencyFor(selected).toFixed(1) }} Hz</span></span></div>
           <!-- 下方网格承接频率后的空间，并扣除底部音名标签区域，让圆钮居于两者之间。 -->
-          <div class="short:group-data-[layout=circle]:mt-0 short:group-data-[layout=circle]:pb-0 short:group-data-[layout=circle]:w-auto short:group-data-[layout=circle]:self-center row-start-3 z-[2] -mt-6 grid min-h-0 w-full self-stretch place-items-center pb-[calc(8%_+_2rem)] mobile:-mt-14">
+          <div class="wide:mt-0 wide:pb-0 wide:self-auto row-start-3 z-[2] -mt-6 grid min-h-0 w-full self-stretch place-items-center pb-[calc(8%_+_2rem)] mobile:-mt-14">
             <button ref="playButton" class="grid h-16 w-16 place-items-center rounded-full border border-[#dfbd81aa] bg-[#243126] text-gold shadow-[0_0_calc(var(--energy)*26px)_#dfbd8133] transition-[background,box-shadow,transform] duration-[250ms] group-data-[playing=true]:border-gold group-data-[playing=true]:bg-gold group-data-[playing=true]:text-bg hover:scale-[1.09] hover:bg-gold hover:text-bg hover:shadow-[0_0_35px_#dfbd8133] short:h-11 short:w-11" :aria-label="active ? text.pause : text.play" :aria-pressed="active" :aria-busy="loading" @click="togglePlayback">
               <svg class="h-[25px] w-[25px] fill-current" :class="{ 'translate-x-[2px]': !active }" viewBox="0 0 24 24" aria-hidden="true"><path :d="active ? 'M7 5H10V19H7ZM14 5H17V19H14Z' : 'M7 5 17 12 7 19Z'" /></svg>
             </button>
@@ -369,37 +402,7 @@ onUnmounted(() => {
         </div>
         <!-- 左右装饰使用等宽槽位，让提示文字在暂停和播放时都保持中心不变。 -->
         <div class="-mt-1.5 grid min-h-5 w-full shrink-0 grid-cols-[24px_auto_24px] items-center justify-center gap-3 text-[13px] tracking-[2px] text-muted group-data-[playing=true]:text-[#c8cdbb] mobile:text-[12px]" role="status"><span class="h-[5px] w-[5px] justify-self-center rounded-full bg-[#778179] group-data-[playing=true]:bg-gold" /><span class="relative left-[1px]">{{ status }}</span><span class="flex h-4 items-center gap-[3px] justify-self-center opacity-0 group-data-[playing=true]:opacity-100" aria-hidden="true"><i class="block h-2.5 w-[3px] bg-gold group-data-[playing=true]:h-3 group-data-[playing=true]:origin-center group-data-[playing=true]:scale-y-[calc(.2_+_var(--energy)*.8)] group-data-[playing=true]:transition-transform group-data-[playing=true]:duration-100" /><i class="block h-2.5 w-[3px] bg-gold group-data-[playing=true]:h-4 group-data-[playing=true]:origin-center group-data-[playing=true]:scale-y-[calc(.2_+_var(--energy)*.8)] group-data-[playing=true]:transition-transform group-data-[playing=true]:duration-100" /><i class="block h-2.5 w-[3px] bg-gold group-data-[playing=true]:h-[9px] group-data-[playing=true]:origin-center group-data-[playing=true]:scale-y-[calc(.2_+_var(--energy)*.8)] group-data-[playing=true]:transition-transform group-data-[playing=true]:duration-100" /><i class="block h-2.5 w-[3px] bg-gold group-data-[playing=true]:h-[13px] group-data-[playing=true]:origin-center group-data-[playing=true]:scale-y-[calc(.2_+_var(--energy)*.8)] group-data-[playing=true]:transition-transform group-data-[playing=true]:duration-100" /></span></div>
-      </section>
-      <section class="col-span-full mt-[34px] rounded-xl border border-line bg-surface px-[30px] pb-5 pt-[27px] mobile:mt-7 mobile:px-4 mobile:pb-4 mobile:pt-5 wide:mt-0 wide:min-w-0 wide:p-[clamp(16px,2.2dvh,28px)]" :aria-label="text.controls">
-        <div class="wide:grid wide:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] wide:items-start wide:gap-x-[clamp(24px,3.4vw,64px)]">
-          <div class="min-w-0">
-            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 class="m-0 text-[14px] font-medium tracking-[2px] english:tracking-normal">{{ text.choose }}</h2>
-              <div class="flex rounded-full border border-line p-[3px]" role="group" :aria-label="text.keyLayout">
-                <button type="button" class="rounded-full px-3 py-[5px] text-[11px] transition-colors" :class="keyLayout === 'chromatic' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="keyLayout === 'chromatic'" @click="keyLayout = 'chromatic'">{{ text.chromatic }}</button>
-                <button type="button" class="rounded-full px-3 py-[5px] text-[11px] transition-colors" :class="keyLayout === 'circle' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="keyLayout === 'circle'" @click="keyLayout = 'circle'">{{ text.circleOfFifths }}</button>
-              </div>
-            </div>
-            <!-- 主调与关系小调共用扇区；内圈仅作关系标注，不暗示额外的小调录音。 -->
-            <svg v-if="keyLayout === 'circle'" class="mx-auto block aspect-square w-[260px] max-w-full overflow-visible" viewBox="0 0 260 260" role="group" :aria-label="text.circleOfFifths">
-              <g v-for="sector in CIRCLE_SECTORS" :key="sector.index" class="group/sector cursor-pointer outline-none" role="button" tabindex="0" :aria-label="t('key', { note: `${NOTES[sector.index]}${droneOctave(sector.index)}` })" :aria-pressed="sector.index === selected" @click="selectKey(sector.index)" @keydown.enter.prevent="selectKey(sector.index)" @keydown.space.prevent="selectKey(sector.index)">
-                <path :d="sector.path" class="stroke-[#657060] stroke-1 transition-colors group-focus-visible/sector:stroke-gold group-focus-visible/sector:stroke-[3]" :class="sector.index === selected ? 'fill-gold' : 'fill-[#1c251f] group-hover/sector:fill-[#30372a]'" />
-                <text :x="sector.major[0]" :y="sector.major[1]" text-anchor="middle" dominant-baseline="central" class="pointer-events-none text-[22px]" :class="sector.index === selected ? 'fill-bg' : 'fill-ink'" aria-hidden="true">{{ NOTES[sector.index] }}</text>
-                <text :x="sector.minor[0]" :y="sector.minor[1]" text-anchor="middle" dominant-baseline="central" class="pointer-events-none text-[12px]" :class="sector.index === selected ? 'fill-bg' : 'fill-muted'" aria-hidden="true">{{ sector.minorName }}</text>
-              </g>
-              <circle cx="130" cy="130" r="88" class="pointer-events-none fill-none stroke-[#657060] stroke-1" aria-hidden="true" />
-              <circle cx="130" cy="130" r="128" class="pointer-events-none fill-none stroke-[#89947d] stroke-[2]" aria-hidden="true" />
-            </svg>
-            <div v-else class="grid grid-cols-12 gap-[9px] mobile:grid-cols-6 mobile:gap-2" role="group" :aria-label="text.keys">
-              <button v-for="item in displayedKeys" :key="item.index" type="button" class="relative h-[63px] rounded-[7px] border border-[#3c463b] bg-[#1c251f] font-pitch text-[22px] text-[#bcc5bb] transition-[background,border-color,box-shadow] duration-200 hover:border-gold hover:bg-[#30372a] hover:text-gold aria-pressed:border-gold aria-pressed:bg-gold aria-pressed:text-[#182019] aria-pressed:shadow-[0_4px_25px_#dfbd8120] mobile:h-[52px] wide:h-[clamp(48px,5dvh,64px)]" :aria-label="t('key', { note: `${NOTES[item.index]}${droneOctave(item.index)}` })" :aria-pressed="item.index === selected" @click="selectKey(item.index)">{{ NOTES[item.index][0] }}<small v-if="NOTES[item.index].length > 1" class="ml-px align-super text-[13px]">{{ NOTES[item.index][1] }}</small>{{ droneOctave(item.index) }}</button>
-            </div>
-            <div class="mx-auto mb-[22px] mt-7 flex max-w-[440px] items-center gap-[18px] text-[12px] text-muted mobile:mx-0 mobile:mb-5 mobile:mt-[25px] wide:my-[clamp(14px,2dvh,24px)]">
-              <label class="flex items-center gap-[9px] whitespace-nowrap english:tracking-normal" for="volume"><svg class="h-4 w-4 fill-none stroke-current [stroke-width:1.5]" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Zm4 3q5 4 0 8m3-11q8 7 0 14" /></svg>{{ text.volume }}</label>
-              <input id="volume" class="volume-range" type="range" min="0" max="100" :value="volume" :style="{ '--fill': `${volume}%` }" :aria-label="text.volume" @input="onVolumeInput" />
-              <output id="volume-value" class="w-10 [font-variant-numeric:tabular-nums]" for="volume">{{ volume }}%</output>
-            </div>
-          </div>
-          <div class="mt-8 min-w-0 border-t border-line pt-6 wide:mt-0 wide:border-t-0 wide:pt-0">
+      </section><div class="order-4 col-span-full mt-[34px] mobile:mt-7 wide:order-none wide:mt-0 wide:shrink-0 wide:h-[clamp(320px,32dvh,360px)] wide:flex wide:flex-col min-w-0 rounded-xl border border-line bg-surface px-[30px] pb-5 pt-[27px] mobile:px-4 mobile:pb-4 mobile:pt-5 wide:p-[clamp(16px,2.2dvh,28px)]">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <h2 class="m-0 text-[14px] font-medium tracking-[2px] english:tracking-normal">{{ text.synth }}</h2>
               <div class="flex flex-wrap items-center gap-2">
@@ -434,11 +437,11 @@ onUnmounted(() => {
               <input id="synth-volume" class="volume-range flex-1" type="range" min="0" max="100" :value="synthVolume" :style="{ '--fill': `${synthVolume}%` }" :aria-label="text.synthVolume" @input="onSynthVolumeInput" />
               <output class="w-9 text-right [font-variant-numeric:tabular-nums]" for="synth-volume">{{ synthVolume }}%</output>
             </div>
-            <p class="mt-2.5 text-[10px] leading-[1.7] tracking-[1px] text-muted english:tracking-normal">{{ t('shortcuts', { note: topNote }) }}</p>
+            <div class="wide:mt-auto wide:pt-3 mt-6 border-t border-line pt-4 text-[11px] tracking-[1px] text-muted wide:mt-[clamp(12px,1.6dvh,20px)] wide:pt-3">{{ t('shortcuts', { note: topNote }) }}</div>
           </div>
-        </div>
-        <div class="mt-6 flex flex-wrap justify-between gap-x-4 gap-y-2 border-t border-line pt-4 text-[11px] tracking-[1px] text-muted wide:mt-[clamp(12px,1.6dvh,20px)] wide:pt-3"><span>{{ text.recording }}</span><span>{{ text.headphones }}</span></div>
-      </section>
+      </div>
+
+
     </main>
     <footer class="relative mx-[6%] flex justify-between border-t border-line pb-7 pt-[23px] text-[12px] tracking-[2px] text-muted mobile:text-[11px] wide:mx-auto wide:min-h-[48px] wide:w-[calc(100%_-_2*var(--gutter))] wide:max-w-[calc(1800px_-_2*var(--gutter))] wide:items-center wide:py-4"><span>{{ text.footer }}</span><span class="mobile:hidden english:tracking-normal">{{ text.footerRight }} <span class="ml-[18px] text-gold"><svg class="inline-block h-3 w-3" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0q0 8 8 8-8 0-8 8Q8 8 0 8q8 0 8-8" /></svg></span></span></footer>
   </div>
