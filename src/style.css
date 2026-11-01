@@ -9,12 +9,12 @@
   font-display: swap;
 }
 
-/* 断点沿用原有 760px / 1000px×700px 条件，窄屏和矮窗口各自保留原布局。 */
+/* 合成器表头需要约 1080px 宽才能与标题同行；提前到 1120px 才横排，避免窄列里控件换行压住键盘。 */
 @custom-variant mobile (@media (max-width: 760px));
-@custom-variant wide (@media (min-width: 1000px) and (min-height: 700px));
+@custom-variant wide (@media (min-width: 1120px) and (min-height: 700px));
 /* 五度圈控制卡较高，按剩余空间提前启用紧凑播放器和介绍区。 */
-@custom-variant circle-compact (@media (min-width: 1000px) and (min-height: 700px) and (max-height: 1000px));
-@custom-variant short (@media (min-width: 1000px) and (min-height: 700px) and (max-height: 850px));
+@custom-variant circle-compact (@media (min-width: 1120px) and (min-height: 700px) and (max-height: 1000px));
+@custom-variant short (@media (min-width: 1120px) and (min-height: 700px) and (max-height: 850px));
 
 /* 英文字距只用于翻译文案，品牌、音名与数字不随语言切换。 */
 @custom-variant english (&:where(html[lang="en"] *));
