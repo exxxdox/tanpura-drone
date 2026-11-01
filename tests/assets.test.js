@@ -4,6 +4,11 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { NOTES, FILES } from '../src/audio-engine.js';
 
+test('音名使用降号，保持半音顺序与录音映射', () => {
+  assert.deepEqual(NOTES, ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']);
+  assert.deepEqual(FILES, ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b']);
+});
+
 test('发布包包含十二份不同完整录音', () => {
   assert.equal(NOTES.length, 12);
   assert.equal(FILES.length, 12);

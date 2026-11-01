@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { messages, readLocale, saveLocale } from './i18n.js';
 import { Drone, NOTES, frequencyFor } from './audio-engine.js';
+import { CIRCLE_SECTORS } from './key-layout.js';
 import { Synth, SYNTH_KEY_MAP, SYNTH_RANGES, synthKeys, synthNotes } from './synth.js';
 
 // localStorage 的属性访问本身也可能被浏览器隐私设置拒绝。
@@ -28,7 +29,7 @@ const ANCHORS = STRING_SHAPES.flatMap(([x]) => [72, 528].map(y => ({ x, y })));
 const basePath = ([x, bow]) => `M${x} 72 C${x + bow} 180 ${x + bow} 420 ${x} 528`;
 const labelFor = midi => `${NOTES[midi % 12]}${Math.floor(midi / 12) - 1}`;
 const rangeLabel = base => `C${base}–C${base + 2}`;
-// 录音从 F♯ 起低一个八度，音区标注须与现有主音频率一致。
+// 录音从 Gb 起低一个八度，音区标注须与现有主音频率一致。
 const droneOctave = index => index < 6 ? 3 : 2;
 
 let engine;
@@ -42,6 +43,8 @@ const playButton = ref(null);
 const scene = ref(null);
 const strings = ref([]);
 const selected = ref(0);
+const keyLayout = ref('chromatic');
+const displayedKeys = NOTES.map((_, index) => ({ index }));
 const playing = ref(false);
 const loading = ref(false);
 const error = ref('');
@@ -52,13 +55,15 @@ const synthMode = ref('hold');
 // 默认以 C2–C4 作为听音训练音域，界面与键盘映射共用此起始八度。
 const synthRange = ref(2);
 const synthVolume = ref(45);
+const synthTranspose = ref(0);
+const soundingLabel = midi => labelFor(midi + synthTranspose.value);
 const activeNotes = ref(new Set());
 // 记录由电脑键盘按下的音，keyup 只释放这些音，避免切断鼠标按住的声部。
 const keyboardNotes = new Set();
 // 键盘按白键与黑键分开渲染，黑键用 left 百分比叠在白键之间。
 const whiteKeys = computed(() => synthKeys(synthRange.value).filter(key => !key.black));
 const blackKeys = computed(() => synthKeys(synthRange.value).filter(key => key.black));
-const topNote = computed(() => labelFor(synthNotes(synthRange.value).at(-1)));
+const topNote = computed(() => soundingLabel(synthNotes(synthRange.value).at(-1)));
 
 const note = computed(() => NOTES[selected.value]);
 const active = computed(() => playing.value || loading.value);
@@ -221,6 +226,14 @@ function setSynthRange(event) {
   synthRange.value = base;
 }
 
+// 改变移调时同步清空界面和键盘状态，松键不会遗留旧声部。
+function setSynthTranspose(event) {
+  const value = Number(event.target.value);
+  if (!synth.setTranspose(value)) return;
+  releaseAll();
+  synthTranspose.value = value;
+}
+
 // 键盘映射存的是音域内偏移，按键时换算成当前八度的 MIDI 音高。
 function midiFor(offset) {
   return synthNotes(synthRange.value)[offset];
@@ -292,7 +305,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="group relative min-h-dvh bg-bg text-ink wide:grid wide:h-dvh wide:grid-rows-[auto_minmax(0,1fr)_auto] wide:[--gutter:clamp(32px,5vw,96px)]" :data-playing="playing">
+  <div class="group relative min-h-dvh bg-bg text-ink wide:grid wide:h-dvh wide:grid-rows-[auto_minmax(0,1fr)_auto] wide:[--gutter:clamp(32px,5vw,96px)]" :data-playing="playing" :data-layout="keyLayout">
     <div class="grain" aria-hidden="true" />
     <header class="relative flex h-[116px] items-center gap-[25px] mobile:gap-2 px-[6%] mobile:h-[85px] wide:mx-auto wide:h-[clamp(72px,8dvh,112px)] wide:w-full wide:max-w-[1800px] wide:px-[var(--gutter)]">
       <a class="shrink-0 text-[30px] mobile:text-[18px] font-semibold tracking-[-1.5px] text-ink no-underline" href="./" :aria-label="text.home"><span class="mr-3 mobile:mr-1 inline-block align-[-3px] text-[38px] mobile:text-[22px] text-gold"><svg class="inline-block h-[1em] w-[1em]" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 10q5-6 11 0t11 0M5 16q5-6 11 0t11 0M5 22q5-6 11 0t11 0" /></svg></span> tanpura<span class="text-gold">.</span></a>
@@ -320,7 +333,8 @@ onUnmounted(() => {
       <p class="my-[1em] text-[#c1c9bf] english:tracking-normal">{{ text.aboutSynth }}</p>
     </aside>
     <main class="relative mx-auto grid max-w-[1440px] grid-cols-[1fr_1.6fr] items-center px-[6%] pb-[62px] pt-5 mobile:grid-cols-1 mobile:pt-[22px] wide:w-full wide:max-w-[1800px] wide:min-h-0 wide:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] wide:grid-rows-[minmax(0,1fr)_auto] wide:gap-y-[clamp(16px,2.4dvh,32px)] wide:px-[var(--gutter)] wide:pb-[clamp(18px,3dvh,40px)] wide:pt-0">
-      <section class="min-w-0 self-center pt-[5px] mobile:z-[2] english:[container-type:inline-size]">
+      <!-- 五度圈增加控制卡高度，矮桌面缩减介绍区，避免标题与页眉重叠。 -->
+      <section class="short:group-data-[layout=circle]:[&_h1]:text-[32px] short:group-data-[layout=circle]:[&_h1]:my-2 short:group-data-[layout=circle]:[&_p]:hidden short:group-data-[layout=circle]:[&>div:last-child]:hidden min-w-0 self-center pt-[5px] mobile:z-[2] english:[container-type:inline-size]">
         <div class="flex items-center gap-[10px] text-[12px] tracking-[3px] text-gold mobile:text-[11px] english:tracking-normal"><span class="h-[5px] w-[5px] rounded-full bg-gold" /> {{ text.eyebrow }}</div>
         <!-- 中英文始终按两句分行；小屏中文放大便于阅读，英文按容器宽度缩放以免溢出。 -->
         <h1 class="mb-[22px] mt-6 font-serif text-[clamp(48px,5.8vw,84px)] font-normal leading-[1.5] tracking-[4px] mobile:my-[15px] mobile:text-[clamp(36px,10vw,44px)] mobile:leading-[1.4] mobile:tracking-[2px] wide:my-[clamp(16px,2dvh,28px)] wide:text-[clamp(44px,min(4.8vw,7.4dvh),90px)] wide:leading-[1.4] english:tracking-normal english:text-[min(84px,10cqw)]"><span class="whitespace-nowrap">{{ text.heading1 }}</span><br /><span class="whitespace-nowrap">{{ text.heading2 }}</span></h1>
@@ -329,12 +343,12 @@ onUnmounted(() => {
       </section>
       <section class="relative min-w-0 mobile:mt-[6px] wide:flex wide:h-full wide:min-h-0 wide:flex-col wide:items-center wide:justify-center" :aria-label="text.player">
         <!-- 宽屏由行高决定方形尺寸，控制卡变高时场景自动收缩，状态行不会压到下方模块。 -->
-        <div ref="scene" class="group/scene relative isolate mx-auto grid aspect-square grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] w-[min(100%,570px)] place-items-center [--energy:0] mobile:max-w-[420px] wide:h-full wide:max-h-[740px] wide:min-h-0 wide:w-auto wide:max-w-full wide:flex-1">
+        <div ref="scene" class="short:group-data-[layout=circle]:flex short:group-data-[layout=circle]:aspect-auto short:group-data-[layout=circle]:flex-row short:group-data-[layout=circle]:justify-center short:group-data-[layout=circle]:gap-8 group/scene relative isolate mx-auto grid aspect-square grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] w-[min(100%,570px)] place-items-center [--energy:0] mobile:max-w-[420px] wide:h-full wide:max-h-[740px] wide:min-h-0 wide:w-auto wide:max-w-full wide:flex-1">
           <div class="pointer-events-none absolute inset-[15%] rounded-full bg-[radial-gradient(ellipse,#dfbd8122,transparent_68%)] opacity-[calc(var(--energy)*.9)] scale-[calc(.9_+_var(--energy)*.22)] motion-reduce:hidden" aria-hidden="true" />
           <div class="pointer-events-none absolute inset-[14%] rounded-full border border-gold opacity-[calc(var(--energy)*.26)] transition-opacity duration-300 scale-[calc(.97_+_var(--energy)*.15)] motion-reduce:hidden" aria-hidden="true" /><div class="pointer-events-none absolute inset-[7%] rounded-full border border-gold opacity-[calc(var(--energy)*.12)] transition-opacity duration-300 scale-[calc(.97_+_var(--energy)*.08)] motion-reduce:hidden" aria-hidden="true" />
           <div class="absolute inset-[3%] rounded-full border border-dashed border-[#b8a57528] transition-shadow duration-1000" /><div class="absolute inset-[10%] rounded-full border border-[#b8a5753b] transition-shadow duration-1000 group-data-[playing=true]:animate-turn before:absolute before:-top-[3px] before:left-1/2 before:h-1.5 before:w-1.5 before:rounded-full before:bg-gold before:shadow-[0_0_15px_#dfbd8177] before:content-[''] after:absolute after:bottom-[-3px] after:left-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-gold after:shadow-[0_0_15px_#dfbd8177] after:content-[''] mobile:before:hidden" /><div class="absolute inset-[17%] rounded-full border border-[#b8a57518] transition-shadow duration-1000 group-data-[playing=true]:opacity-[calc(.4_+_var(--energy)*.6)] group-data-[playing=true]:shadow-[0_0_35px_#dfbd810c,inset_0_0_35px_#dfbd810c] group-hover/scene:border-[#dfbd8155]" />
           <!-- 字间距在末字后也占位，把视觉文字推左半个字距；用相对位移回正到中心竖轴。 -->
-          <div class="absolute left-1/2 top-[8%] -translate-x-1/2 bg-bg px-[15px] py-2 text-[11px] tracking-[5px] text-muted mobile:hidden"><span class="relative left-[2.5px] english:tracking-normal">{{ text.resonance }}</span></div><div class="absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap bg-bg px-[15px] py-2 text-[11px] tracking-[3px] text-muted"><span class="relative left-[1.5px]">Pa · Sa · Sa · Sa</span></div>
+          <div class="short:group-data-[layout=circle]:hidden absolute left-1/2 top-[8%] -translate-x-1/2 bg-bg px-[15px] py-2 text-[11px] tracking-[5px] text-muted mobile:hidden"><span class="relative left-[2.5px] english:tracking-normal">{{ text.resonance }}</span></div><div class="short:group-data-[layout=circle]:hidden absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap bg-bg px-[15px] py-2 text-[11px] tracking-[3px] text-muted"><span class="relative left-[1.5px]">Pa · Sa · Sa · Sa</span></div>
           <svg class="absolute inset-0 h-full w-full opacity-[.36] transition-[opacity,filter] duration-700 group-data-[playing=true]:opacity-[calc(.42_+_var(--energy)*.55)] group-data-[playing=true]:drop-shadow-[0_0_5px_#dfbd8166] group-hover/scene:opacity-[.8]" viewBox="0 0 600 600" aria-hidden="true">
             <defs><linearGradient id="thread"><stop stop-color="#c5a46b" stop-opacity="0" /><stop offset=".5" stop-color="#e8c78c" /><stop offset="1" stop-color="#c5a46b" stop-opacity="0" /></linearGradient></defs>
             <g fill="none" stroke="url(#thread)">
@@ -344,10 +358,10 @@ onUnmounted(() => {
               <circle v-for="anchor in ANCHORS" :key="`${anchor.x}-${anchor.y}`" :cx="anchor.x" :cy="anchor.y" r="2" />
             </g>
           </svg>
-          <!-- 主音、频率、圆钮、上下标签统一按几何中心落在场景竖轴；升号绝对定位，不参与字母居中。 -->
-          <div class="row-start-2 z-[1] -translate-y-6 text-center mobile:-translate-y-14 group-data-[playing=true]:drop-shadow-[0_0_18px_#dfbd811a]"><span class="block text-[11px] tracking-[4px] text-muted short:hidden"><span class="relative left-[2px] english:tracking-normal">{{ text.tonic }}</span></span><div class="font-pitch text-[124px] leading-[1.35] text-gold [text-shadow:0_0_70px_#d7b57822] mobile:text-[clamp(78px,26vw,100px)] wide:text-[clamp(78px,13dvh,140px)] short:text-[clamp(68px,11dvh,90px)]"><span class="relative inline-block">{{ note[0] }}<span v-if="note.length > 1" class="absolute left-full top-[18.6%] ml-[2px] text-[37px]">♯</span></span></div><span class="text-[13px] tracking-[2px] text-muted [font-variant-numeric:tabular-nums]"><span class="relative left-[1px]">≈ {{ frequencyFor(selected).toFixed(1) }} Hz</span></span></div>
+          <!-- 主音、频率、圆钮、上下标签统一按几何中心落在场景竖轴；降号绝对定位，不参与字母居中。 -->
+          <div class="short:group-data-[layout=circle]:translate-y-0 row-start-2 z-[1] -translate-y-6 text-center mobile:-translate-y-14 group-data-[playing=true]:drop-shadow-[0_0_18px_#dfbd811a]"><span class="block text-[11px] tracking-[4px] text-muted short:hidden"><span class="relative left-[2px] english:tracking-normal">{{ text.tonic }}</span></span><div class="font-pitch text-[124px] leading-[1.35] text-gold [text-shadow:0_0_70px_#d7b57822] mobile:text-[clamp(78px,26vw,100px)] wide:text-[clamp(78px,13dvh,140px)] short:text-[clamp(68px,11dvh,90px)] short:group-data-[layout=circle]:text-[48px]"><span class="relative inline-block">{{ note[0] }}<span v-if="note.length > 1" class="absolute left-full top-[18.6%] ml-[2px] text-[37px]">{{ note[1] }}</span></span></div><span class="text-[13px] tracking-[2px] text-muted [font-variant-numeric:tabular-nums]"><span class="relative left-[1px]">≈ {{ frequencyFor(selected).toFixed(1) }} Hz</span></span></div>
           <!-- 下方网格承接频率后的空间，并扣除底部音名标签区域，让圆钮居于两者之间。 -->
-          <div class="row-start-3 z-[2] -mt-6 grid min-h-0 w-full self-stretch place-items-center pb-[calc(8%_+_2rem)] mobile:-mt-14">
+          <div class="short:group-data-[layout=circle]:mt-0 short:group-data-[layout=circle]:pb-0 short:group-data-[layout=circle]:w-auto short:group-data-[layout=circle]:self-center row-start-3 z-[2] -mt-6 grid min-h-0 w-full self-stretch place-items-center pb-[calc(8%_+_2rem)] mobile:-mt-14">
             <button ref="playButton" class="grid h-16 w-16 place-items-center rounded-full border border-[#dfbd81aa] bg-[#243126] text-gold shadow-[0_0_calc(var(--energy)*26px)_#dfbd8133] transition-[background,box-shadow,transform] duration-[250ms] group-data-[playing=true]:border-gold group-data-[playing=true]:bg-gold group-data-[playing=true]:text-bg hover:scale-[1.09] hover:bg-gold hover:text-bg hover:shadow-[0_0_35px_#dfbd8133] short:h-11 short:w-11" :aria-label="active ? text.pause : text.play" :aria-pressed="active" :aria-busy="loading" @click="togglePlayback">
               <svg class="h-[25px] w-[25px] fill-current" :class="{ 'translate-x-[2px]': !active }" viewBox="0 0 24 24" aria-hidden="true"><path :d="active ? 'M7 5H10V19H7ZM14 5H17V19H14Z' : 'M7 5 17 12 7 19Z'" /></svg>
             </button>
@@ -359,9 +373,25 @@ onUnmounted(() => {
       <section class="col-span-full mt-[34px] rounded-xl border border-line bg-surface px-[30px] pb-5 pt-[27px] mobile:mt-7 mobile:px-4 mobile:pb-4 mobile:pt-5 wide:mt-0 wide:min-w-0 wide:p-[clamp(16px,2.2dvh,28px)]" :aria-label="text.controls">
         <div class="wide:grid wide:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] wide:items-start wide:gap-x-[clamp(24px,3.4vw,64px)]">
           <div class="min-w-0">
-            <div class="mb-[19px] flex items-center justify-between mobile:mb-3 wide:mb-[clamp(12px,1.5dvh,20px)]"><h2 class="m-0 text-[14px] font-medium tracking-[2px] english:tracking-normal">{{ text.choose }}</h2><span class="text-[11px] tracking-[1px] text-muted english:tracking-normal">{{ text.sa }}</span></div>
-            <div class="grid grid-cols-12 gap-[9px] mobile:grid-cols-6 mobile:gap-2" role="group" :aria-label="text.keys">
-              <button v-for="(key, index) in NOTES" :key="key" type="button" class="relative h-[63px] rounded-[7px] border border-[#3c463b] bg-[#1c251f] font-pitch text-[22px] text-[#bcc5bb] transition-[transform,background,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-gold hover:bg-[#30372a] hover:text-gold aria-pressed:border-gold aria-pressed:bg-gold aria-pressed:text-[#182019] aria-pressed:shadow-[0_4px_25px_#dfbd8120] aria-pressed:after:absolute aria-pressed:after:bottom-[7px] aria-pressed:after:left-[calc(50%_-_2px)] aria-pressed:after:h-1 aria-pressed:after:w-1 aria-pressed:after:rounded-full aria-pressed:after:bg-[#3a412f] aria-pressed:after:content-[''] mobile:h-[52px] wide:h-[clamp(48px,5dvh,64px)]" :aria-label="t('key', { note: `${key}${droneOctave(index)}` })" :aria-pressed="index === selected" @click="selectKey(index)">{{ key[0] }}<small v-if="key.length > 1" class="ml-px align-super text-[13px]">♯</small>{{ droneOctave(index) }}</button>
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 class="m-0 text-[14px] font-medium tracking-[2px] english:tracking-normal">{{ text.choose }}</h2>
+              <div class="flex rounded-full border border-line p-[3px]" role="group" :aria-label="text.keyLayout">
+                <button type="button" class="rounded-full px-3 py-[5px] text-[11px] transition-colors" :class="keyLayout === 'chromatic' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="keyLayout === 'chromatic'" @click="keyLayout = 'chromatic'">{{ text.chromatic }}</button>
+                <button type="button" class="rounded-full px-3 py-[5px] text-[11px] transition-colors" :class="keyLayout === 'circle' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="keyLayout === 'circle'" @click="keyLayout = 'circle'">{{ text.circleOfFifths }}</button>
+              </div>
+            </div>
+            <!-- 主调与关系小调共用扇区；内圈仅作关系标注，不暗示额外的小调录音。 -->
+            <svg v-if="keyLayout === 'circle'" class="mx-auto block aspect-square w-[260px] max-w-full overflow-visible" viewBox="0 0 260 260" role="group" :aria-label="text.circleOfFifths">
+              <g v-for="sector in CIRCLE_SECTORS" :key="sector.index" class="group/sector cursor-pointer outline-none" role="button" tabindex="0" :aria-label="t('key', { note: `${NOTES[sector.index]}${droneOctave(sector.index)}` })" :aria-pressed="sector.index === selected" @click="selectKey(sector.index)" @keydown.enter.prevent="selectKey(sector.index)" @keydown.space.prevent="selectKey(sector.index)">
+                <path :d="sector.path" class="stroke-[#657060] stroke-1 transition-colors group-focus-visible/sector:stroke-gold group-focus-visible/sector:stroke-[3]" :class="sector.index === selected ? 'fill-gold' : 'fill-[#1c251f] group-hover/sector:fill-[#30372a]'" />
+                <text :x="sector.major[0]" :y="sector.major[1]" text-anchor="middle" dominant-baseline="central" class="pointer-events-none text-[22px]" :class="sector.index === selected ? 'fill-bg' : 'fill-ink'" aria-hidden="true">{{ NOTES[sector.index] }}</text>
+                <text :x="sector.minor[0]" :y="sector.minor[1]" text-anchor="middle" dominant-baseline="central" class="pointer-events-none text-[12px]" :class="sector.index === selected ? 'fill-bg' : 'fill-muted'" aria-hidden="true">{{ sector.minorName }}</text>
+              </g>
+              <circle cx="130" cy="130" r="88" class="pointer-events-none fill-none stroke-[#657060] stroke-1" aria-hidden="true" />
+              <circle cx="130" cy="130" r="128" class="pointer-events-none fill-none stroke-[#89947d] stroke-[2]" aria-hidden="true" />
+            </svg>
+            <div v-else class="grid grid-cols-12 gap-[9px] mobile:grid-cols-6 mobile:gap-2" role="group" :aria-label="text.keys">
+              <button v-for="item in displayedKeys" :key="item.index" type="button" class="relative h-[63px] rounded-[7px] border border-[#3c463b] bg-[#1c251f] font-pitch text-[22px] text-[#bcc5bb] transition-[background,border-color,box-shadow] duration-200 hover:border-gold hover:bg-[#30372a] hover:text-gold aria-pressed:border-gold aria-pressed:bg-gold aria-pressed:text-[#182019] aria-pressed:shadow-[0_4px_25px_#dfbd8120] mobile:h-[52px] wide:h-[clamp(48px,5dvh,64px)]" :aria-label="t('key', { note: `${NOTES[item.index]}${droneOctave(item.index)}` })" :aria-pressed="item.index === selected" @click="selectKey(item.index)">{{ NOTES[item.index][0] }}<small v-if="NOTES[item.index].length > 1" class="ml-px align-super text-[13px]">{{ NOTES[item.index][1] }}</small>{{ droneOctave(item.index) }}</button>
             </div>
             <div class="mx-auto mb-[22px] mt-7 flex max-w-[440px] items-center gap-[18px] text-[12px] text-muted mobile:mx-0 mobile:mb-5 mobile:mt-[25px] wide:my-[clamp(14px,2dvh,24px)]">
               <label class="flex items-center gap-[9px] whitespace-nowrap english:tracking-normal" for="volume"><svg class="h-4 w-4 fill-none stroke-current [stroke-width:1.5]" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Zm4 3q5 4 0 8m3-11q8 7 0 14" /></svg>{{ text.volume }}</label>
@@ -378,6 +408,11 @@ onUnmounted(() => {
                     <option v-for="base in SYNTH_RANGES" :key="base" :value="base">{{ rangeLabel(base) }}</option>
                   </select>
                 </label>
+                <label class="flex items-center gap-1.5 text-[11px] text-muted">{{ text.transpose }}
+                  <select class="rounded-[6px] border border-line bg-[#1c251f] px-2 py-1 text-[11px] text-ink" :value="synthTranspose" :aria-label="text.transpose" @change="setSynthTranspose">
+                    <option v-for="offset in 25" :key="offset" :value="offset - 13">{{ offset > 13 ? '+' : '' }}{{ offset - 13 }}</option>
+                  </select>
+                </label>
                 <div class="flex rounded-full border border-line p-[3px]" role="group" :aria-label="text.mode">
                   <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors english:tracking-normal" :class="synthMode === 'latch' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'latch'" @click="setSynthMode('latch')">{{ text.latch }}</button>
                   <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors english:tracking-normal" :class="synthMode === 'hold' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'hold'" @click="setSynthMode('hold')">{{ text.hold }}</button>
@@ -385,13 +420,13 @@ onUnmounted(() => {
               </div>
             </div>
             <div class="touch-pan-x [scrollbar-color:#3c463b_transparent] [scrollbar-width:thin] mobile:overflow-x-auto">
-              <div class="relative h-[74px] select-none mobile:h-[64px] mobile:min-w-[480px] wide:h-[clamp(56px,7.2dvh,84px)]" role="group" :aria-label="t('keyboard', { from: `C${synthRange}`, to: `C${synthRange + 2}` })">
+              <div class="relative h-[74px] select-none mobile:h-[64px] mobile:min-w-[480px] wide:h-[clamp(56px,7.2dvh,84px)]" role="group" :aria-label="t('keyboard', { from: soundingLabel(synthNotes(synthRange)[0]), to: topNote })">
                 <div class="flex h-full">
-                <button v-for="key in whiteKeys" :key="key.midi" type="button" class="relative h-full flex-1 rounded-b-[6px] border-r border-bg bg-[#e6dfce] text-[10px] tracking-[.5px] text-[#6b6455] transition-colors duration-100 last:border-r-0 hover:bg-[#f2ecdd] aria-pressed:bg-gold aria-pressed:text-[#3f3524]" :aria-label="t('synthNote', { note: labelFor(key.midi) })" :aria-pressed="activeNotes.has(key.midi)" @click="pressNote(key.midi)" @pointerdown="holdNote($event, key.midi)" @pointerup="releaseNote(key.midi)" @pointerleave="releaseNote(key.midi)" @pointercancel="releaseNote(key.midi)" @keydown.enter="keyHold($event, key.midi)" @keydown.space="keyHold($event, key.midi)" @keyup.enter="keyRelease($event, key.midi)" @keyup.space="keyRelease($event, key.midi)">
-                  <span class="pointer-events-none absolute inset-x-0 bottom-1.5 text-center">{{ key.midi % 12 === 0 ? labelFor(key.midi) : '' }}</span>
+                <button v-for="key in whiteKeys" :key="key.midi" type="button" class="relative h-full flex-1 rounded-b-[6px] border-r border-bg bg-[#e6dfce] text-[10px] tracking-[.5px] text-[#6b6455] transition-colors duration-100 last:border-r-0 hover:bg-[#f2ecdd] aria-pressed:bg-gold aria-pressed:text-[#3f3524]" :aria-label="t('synthNote', { note: soundingLabel(key.midi) })" :aria-pressed="activeNotes.has(key.midi)" @click="pressNote(key.midi)" @pointerdown="holdNote($event, key.midi)" @pointerup="releaseNote(key.midi)" @pointerleave="releaseNote(key.midi)" @pointercancel="releaseNote(key.midi)" @keydown.enter="keyHold($event, key.midi)" @keydown.space="keyHold($event, key.midi)" @keyup.enter="keyRelease($event, key.midi)" @keyup.space="keyRelease($event, key.midi)">
+                  <span class="pointer-events-none absolute inset-x-0 bottom-1.5 text-center">{{ key.midi % 12 === 0 ? soundingLabel(key.midi) : '' }}</span>
                 </button>
               </div>
-              <button v-for="key in blackKeys" :key="key.midi" type="button" class="absolute top-0 z-[1] h-[60%] w-[4.1%] -translate-x-1/2 rounded-b-[4px] bg-[#1a231d] shadow-[0_3px_6px_#00000066] transition-colors duration-100 before:absolute before:-inset-x-1.5 before:inset-y-0 before:content-[''] hover:bg-[#2b382f] focus-visible:z-[2] aria-pressed:bg-gold" :style="{ left: `${key.left}%` }" :aria-label="t('synthNote', { note: labelFor(key.midi) })" :aria-pressed="activeNotes.has(key.midi)" @click="pressNote(key.midi)" @pointerdown="holdNote($event, key.midi)" @pointerup="releaseNote(key.midi)" @pointerleave="releaseNote(key.midi)" @pointercancel="releaseNote(key.midi)" @keydown.enter="keyHold($event, key.midi)" @keydown.space="keyHold($event, key.midi)" @keyup.enter="keyRelease($event, key.midi)" @keyup.space="keyRelease($event, key.midi)" />
+              <button v-for="key in blackKeys" :key="key.midi" type="button" class="absolute top-0 z-[1] h-[60%] w-[4.1%] -translate-x-1/2 rounded-b-[4px] bg-[#1a231d] shadow-[0_3px_6px_#00000066] transition-colors duration-100 before:absolute before:-inset-x-1.5 before:inset-y-0 before:content-[''] hover:bg-[#2b382f] focus-visible:z-[2] aria-pressed:bg-gold" :style="{ left: `${key.left}%` }" :aria-label="t('synthNote', { note: soundingLabel(key.midi) })" :aria-pressed="activeNotes.has(key.midi)" @click="pressNote(key.midi)" @pointerdown="holdNote($event, key.midi)" @pointerup="releaseNote(key.midi)" @pointerleave="releaseNote(key.midi)" @pointercancel="releaseNote(key.midi)" @keydown.enter="keyHold($event, key.midi)" @keydown.space="keyHold($event, key.midi)" @keyup.enter="keyRelease($event, key.midi)" @keyup.space="keyRelease($event, key.midi)" />
               </div>
             </div>
             <div class="mt-3 flex items-center gap-3 text-[11px] text-muted">
