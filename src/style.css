@@ -90,3 +90,8 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* 仅在介绍区确实放不下时收起次要文字，避免大窗口因旧断点留下大片空白。 */
+@container hero (max-height: 320px) {
+  .hero-intro > p, .hero-intro > div:last-child { display: none; }
+}
