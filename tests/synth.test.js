@@ -153,3 +153,21 @@ test('停止与销毁释放全部声部，销毁后不再发声', t => {
   assert.equal(synth.voices.size, 0);
   assert.equal(synth.noteOn(24), false);
 });
+
+test('移调按半音改变声音，琴键编号不变，切换时释放旧音', t => {
+  const { synth } = setup(t);
+  synth.noteOn(60);
+  const old = synth.voices.get(60);
+  assert.equal(synth.setTranspose(7), true);
+  assert.equal(old.releasing, true);
+  synth.noteOn(60);
+  assert.equal(synth.voices.get(60).oscillators[0].frequency.value, synthFrequency(67));
+  assert.equal(synth.setTranspose(-12), true);
+  synth.noteOn(12);
+  assert.equal(synth.voices.get(12).oscillators[0].frequency.value, synthFrequency(0));
+  for (const invalid of [-13, 13, 0.5, NaN, '2']) assert.equal(synth.setTranspose(invalid), false);
+  assert.equal(synth.transpose, -12);
+  assert.equal(synth.setTranspose(12), true);
+  synth.noteOn(96);
+  assert.equal(synth.voices.get(96).oscillators[0].frequency.value, synthFrequency(108));
+});

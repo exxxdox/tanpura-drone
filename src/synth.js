@@ -37,6 +37,7 @@ export class Synth {
   bus;
   level;
   volume = 1;
+  transpose = 0;
   disposed = false;
 
   constructor(drone) {
@@ -50,7 +51,7 @@ export class Synth {
     if (current) this.finish(current);
     const context = this.output();
     const now = context.currentTime;
-    const frequency = synthFrequency(midi);
+    const frequency = synthFrequency(midi + this.transpose);
     const gain = context.createGain();
     gain.gain.setValueAtTime(0, now);
     gain.gain.linearRampToValueAtTime(LEVEL, now + ATTACK);
@@ -89,6 +90,14 @@ export class Synth {
 
   stop() {
     for (const midi of [...this.voices.keys()]) this.noteOff(midi);
+  }
+
+  setTranspose(value) {
+    if (!Number.isInteger(value) || value < -12 || value > 12) return false;
+    // 声部仍以物理琴键编号释放；换调先淡出，避免旧音与新音混用。
+    if (value !== this.transpose) this.stop();
+    this.transpose = value;
+    return true;
   }
 
   // 合成器独立音量，不再受 Tanpura 主音量影响。

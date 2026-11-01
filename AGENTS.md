@@ -3,7 +3,8 @@
 - Use pnpm. Vue UI lives in `src/App.vue` with the entry in `src/main.js`; Web Audio scheduling and cancellation live in `src/audio-engine.js`.
 - Styling uses Tailwind CSS v4 via `@tailwindcss/vite`: theme tokens, custom variants (`mobile`, `wide`, `short`) and unavoidable pseudo-element utilities live in `src/style.css`; component styles are utility classes in `src/App.vue`.
 - Preserve login-free entry, twelve keys, crossfade loops, volume control, keyboard access and reduced-motion support.
-- The synth lives in `src/synth.js`, shows two octaves from a selectable start (C0–C5), shares the Drone AudioContext but has its own volume, and keeps both latch and hold modes playable by pointer and computer keyboard.
+- The synth lives in `src/synth.js`, shows two octaves from a selectable start (C0–C5), shares the Drone AudioContext but has its own volume, supports ±12-semitone transposition, and keeps both latch and hold modes playable by pointer and computer keyboard. Changing transposition releases active voices; key labels reflect sounding pitches.
+- Key selection supports the original chromatic grid and a clockwise circle of fifths; both share the same recording indices and playback state.
 - Each key uses its own full-length recording at playbackRate 1; keep the twelve files in `public/audio/` accurate.
 - Original downloads live in ignored `outputs/`; preserve the full 25-minute duration in `public/audio/`. Use media streaming, not full-file PCM decoding. Never shorten recordings without explicit approval.
 - Pause must invalidate pending loads. Keep Firefox/Zen compatibility; do not require `cancelAndHoldAtTime`.
@@ -44,6 +45,6 @@ Vercel 依据 `pnpm-lock.yaml` 识别 pnpm；`package.json` 用 `packageManager`
 
 网站统一使用用户提供的 Maple Mono Normal NF CN Regular，发布文件为 `public/fonts/tanpura-maple.woff2`。子集保留完整 ASCII、中英文文案与界面符号；装饰图案使用 SVG。仅提供 Regular 字重，较粗文字由浏览器合成。字体使用 SIL OFL 1.1，授权保留在 `public/fonts/OFL.txt`；修改后的子集内部命名为 Tanpura Maple。
 
-原文件 20,646,968 字节，当前 WOFF2 子集 72,596 字节。原始 TTF 保存在被 Git 忽略的 `local/MapleMonoNormal-NF-CN-Regular.ttf`，本地生成工具也不提交，线上不请求 Google Fonts。
+原文件 20,646,968 字节，当前 WOFF2 子集 73,720 字节。原始 TTF 保存在被 Git 忽略的 `local/MapleMonoNormal-NF-CN-Regular.ttf`，本地生成工具也不提交，线上不请求 Google Fonts。
 
 新增文案后，使用 Python 3 和 Node 重新生成；在独立 Python 环境安装 `fonttools[woff]==4.60.2`，然后执行 `python scripts/subset-font.py local/MapleMonoNormal-NF-CN-Regular.ttf`。脚本读取实际字典与静态界面文字，验证源字体和产物字符覆盖，更新字体及 `subset.json`。运行 `pnpm test` 和 `pnpm build`，并检查浏览器加载与布局。测试会提示新增文案字符未进入子集的情况。

@@ -1,6 +1,7 @@
-export const NOTES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+// 音名统一用降号拼写；索引不变，继续对应原录音与实际音高。
+export const NOTES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 export const FILES = ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b'];
-// 来源 F♯ 起使用低八度，各调直接播放对应录音，不做变调。
+// 来源 Gb 起使用低八度，各调直接播放对应录音，不做变调。
 const FREQUENCIES = [130.8, 138.6, 146.8, 155.6, 164.8, 174.6, 92.5, 98, 103.8, 110, 116.5, 123.5];
 export const frequencyFor = index => FREQUENCIES[index];
 
