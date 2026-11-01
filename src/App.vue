@@ -49,7 +49,8 @@ const volume = ref(65);
 const infoOpen = ref(false);
 // 默认按住发声，避免首次点击留下不易察觉的持续低音。
 const synthMode = ref('hold');
-const synthRange = ref(1);
+// 默认以 C2–C4 作为听音训练音域，界面与键盘映射共用此起始八度。
+const synthRange = ref(2);
 const synthVolume = ref(45);
 const activeNotes = ref(new Set());
 // 记录由电脑键盘按下的音，keyup 只释放这些音，避免切断鼠标按住的声部。
