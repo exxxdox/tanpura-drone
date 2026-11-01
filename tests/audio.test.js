@@ -76,6 +76,20 @@ test('当前请求失败会释放播放器并抛出错误', async t => {
   assert.equal(drone.voices.size, 0);
   assert.equal(drone.active, undefined);
 });
+test('切调失败时保留仍在播放的旧调', async t => {
+  const { drone, audios } = setup(t, true);
+  const first = drone.play(0);
+  audios[0].resolve();
+  assert.equal(await first, true);
+  const switching = drone.play(1);
+  audios[1].reject(new Error('network'));
+  await assert.rejects(switching, /network/);
+  // 引擎只释放失败的新声部；界面层不应再调用 stop() 掐断旧调。
+  assert.equal(drone.active.index, 0);
+  assert.equal(audios[0].paused, false);
+  assert.equal(drone.voices.size, 1);
+});
+
 test('暂停作废待加载播放，晚完成不会重新发声', async t => {
   const { drone, audios } = setup(t, true);
   const playing = drone.play(0);
@@ -105,14 +119,15 @@ test('旧调晚返回不能覆盖新调，过期错误也不会覆盖新请求',
   assert.equal(await latest, true);
 });
 
-test('能量来自真实 analyser，静音和 dispose 清理全部资源', async t => {
+test('能量来自共享 analyser，Tanpura 静音不会清零合成器能量', async t => {
   const { drone, audios, nodes } = setup(t);
   assert.equal(drone.getEnergy(), 0);
   await drone.play(0);
   assert.ok(Math.abs(drone.getEnergy() - .4) < .0001);
   drone.setVolume(0);
-  assert.equal(drone.getEnergy(), 0);
   assert.equal(drone.master.gain.value, 0);
+  // 合成器独立音量直接接入 analyser；静音 Tanpura 后能量仍取自总线。
+  assert.ok(drone.getEnergy() > 0);
   await drone.dispose();
   assert.equal(drone.voices.size, 0);
   assert.ok(audios.every(audio => audio.paused && audio.released));

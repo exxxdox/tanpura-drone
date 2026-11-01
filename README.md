@@ -12,7 +12,7 @@
 
 在 Vercel 导入 GitHub 仓库，项目根目录保持仓库根目录。项目使用 Vite，构建命令为 `pnpm build`，输出目录为 `dist`，已写入 `vercel.json`。安装依赖时使用 pnpm 和锁文件；本项目不需要 API key 或运行时环境变量。
 
-Vercel 依据 `pnpm-lock.yaml` 识别 pnpm，并使用构建镜像自带的 pnpm 版本。`package.json` 因此不写 `packageManager`，避免触发 Vercel 的 Corepack 实验开关 `ENABLE_EXPERIMENTAL_COREPACK`。详见 [Vercel 包管理器说明](https://vercel.com/docs/package-managers)。
+Vercel 依据 `pnpm-lock.yaml` 识别 pnpm；`package.json` 用 `packageManager` 固定为 `pnpm@11.18.0`。若 Vercel 未按该版本执行构建，在项目环境变量中开启 `ENABLE_EXPERIMENTAL_COREPACK=1`。详见 [Vercel 包管理器说明](https://vercel.com/docs/package-managers)。
 
 `src/main.js` 在入口调用 `@vercel/analytics` 的 `inject` 与 `@vercel/speed-insights` 的 `injectSpeedInsights` 各一次。在 Vercel 项目控制台启用 Web Analytics，并检查 Speed Insights 已启用，然后部署。监测数据需部署后的真实访问才能验证；本地预览时监测脚本请求返回 404 属预期。
 
