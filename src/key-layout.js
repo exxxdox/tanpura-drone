@@ -9,7 +9,8 @@ const point = (radius, angle) => {
   const radians = angle * Math.PI / 180;
   return [130 + radius * Math.sin(radians), 130 - radius * Math.cos(radians)];
 };
-const minorNames = ['Am', 'Em', 'Bm', 'Gbm', 'Dbm', 'Abm', 'Ebm', 'Bbm', 'Fm', 'Cm', 'Gm', 'Dm'];
+// 升号侧的关系小调按五度圈习惯写 F#m / C#m / G#m，避免内圈出现降号等音。
+const minorNames = ['Am', 'Em', 'Bm', 'F#m', 'C#m', 'G#m', 'Ebm', 'Bbm', 'Fm', 'Cm', 'Gm', 'Dm'];
 
 // 同一扇区连起主调与关系小调；只改变选调外观，仍使用十二份主调录音。
 export const CIRCLE_SECTORS = CIRCLE_KEYS.map((key, step) => {
