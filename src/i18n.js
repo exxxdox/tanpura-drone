@@ -21,7 +21,7 @@ export const messages = {
   },
   en: {
     home: 'Tanpura home', tagline: 'Sound for focus', sources: 'Sound', language: 'Language',
-    eyebrow: 'Your drone companion', heading1: 'One string.', heading2: 'Find your flow.',
+    eyebrow: 'Your drone companion', heading1: 'Pluck string.', heading2: 'Find your flow.',
     intro1: 'Let sound unfold.', intro2: 'Find your key. Return to now.', twelve: 'Twelve keys · Endless resonance',
     player: 'Tanpura player', resonance: 'Resonance', tonic: 'Current Tonic', pause: 'Pause playback', play: 'Start playback',
     idle: 'Press play. Find your resonance.', loading: 'Loading {note}…', playing: '{note} · Resonating',

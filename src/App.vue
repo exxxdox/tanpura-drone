@@ -343,8 +343,8 @@ onUnmounted(() => {
         <p class="my-[1em] text-[15px] leading-[2.1] tracking-[2px] text-muted mobile:m-0 mobile:text-[13px] mobile:leading-[1.8] short:text-[14px] english:tracking-normal">{{ text.intro1 }}<br class="mobile:hidden" />{{ text.intro2 }}</p>
         <div class="mt-[45px] flex items-center gap-[14px] text-[12px] tracking-[2px] text-muted mobile:hidden wide:mt-[clamp(16px,3dvh,40px)]"><span class="text-[30px] text-gold"><svg class="h-[1em] w-[1em]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2v20M2 12h20M5 5l14 14M5 19 19 5" /></svg></span><span>{{ text.twelve }}</span></div>
       </section>
-<div class="@container/key-selector order-3 col-span-full mt-[34px] mobile:mt-7 wide:order-none wide:mt-0 wide:shrink-0 wide:group-data-[layout=chromatic]:h-[clamp(320px,32dvh,360px)] wide:group-data-[layout=chromatic]:flex wide:group-data-[layout=chromatic]:flex-col min-w-0 rounded-xl border border-line bg-surface px-[30px] pb-5 pt-[27px] mobile:px-4 mobile:pb-4 mobile:pt-5 wide:p-[clamp(16px,2.2dvh,28px)]">
-            <div class="wide:group-data-[layout=chromatic]:h-16 wide:group-data-[layout=chromatic]:shrink-0 mb-3 flex flex-wrap items-center justify-between gap-2">
+<div class="@container/key-selector order-3 col-span-full mt-[34px] mobile:mt-7 wide:order-none wide:mt-0 wide:shrink-0 wide:group-data-[layout=chromatic]:min-h-[clamp(320px,32dvh,360px)] min-[1440px]:wide:group-data-[layout=chromatic]:min-h-[calc(2*clamp(48px,5dvh,64px)+141px+2*clamp(16px,2.2dvh,28px))] wide:group-data-[layout=chromatic]:flex wide:group-data-[layout=chromatic]:flex-col min-w-0 rounded-xl border border-line bg-surface px-[30px] pb-5 pt-[27px] mobile:px-4 mobile:pb-4 mobile:pt-5 wide:p-[clamp(16px,2.2dvh,28px)]">
+            <div class="wide:group-data-[layout=chromatic]:h-12 min-[1440px]:wide:group-data-[layout=chromatic]:h-8 wide:group-data-[layout=chromatic]:shrink-0 mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 class="m-0 text-[14px] font-medium tracking-[2px] english:tracking-normal">{{ text.choose }}</h2>
               <div class="flex rounded-full border border-line p-[3px]" role="group" :aria-label="text.keyLayout">
                 <button type="button" class="rounded-full px-3 py-[5px] text-[11px] transition-colors" :class="keyLayout === 'chromatic' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="keyLayout === 'chromatic'" @click="keyLayout = 'chromatic'">{{ text.chromatic }}</button>
@@ -361,17 +361,17 @@ onUnmounted(() => {
               <circle cx="130" cy="130" r="88" class="pointer-events-none fill-none stroke-[#657060] stroke-1" aria-hidden="true" />
               <circle cx="130" cy="130" r="128" class="pointer-events-none fill-none stroke-[#89947d] stroke-[2]" aria-hidden="true" />
             </svg>
-            <!-- 默认固定两行；与合成器共用行高和音量间距，让演奏区与音量视觉对齐。 -->
+            <!-- 两行音名与键盘共用高度；卡片只设最小高度，底部提示换行也能撑开边框。 -->
             <div v-else class="grid grid-cols-6 gap-[9px] mobile:gap-2" role="group" :aria-label="text.keys">
               <button v-for="item in displayedKeys" :key="item.index" type="button" class="relative h-[63px] rounded-[7px] border border-[#3c463b] bg-[#1c251f] font-pitch text-[20px] whitespace-nowrap mobile:text-[18px] text-[#bcc5bb] transition-[background,border-color,box-shadow] duration-200 hover:border-gold hover:bg-[#30372a] hover:text-gold aria-pressed:border-gold aria-pressed:bg-gold aria-pressed:text-[#182019] aria-pressed:shadow-[0_4px_25px_#dfbd8120] mobile:h-[52px] wide:h-[clamp(48px,5dvh,64px)]" :aria-label="t('key', { note: `${NOTES[item.index]}${droneOctave(item.index)}` })" :aria-pressed="item.index === selected" @click="selectKey(item.index)">{{ NOTES[item.index][0] }}<small v-if="NOTES[item.index].length > 1" class="ml-px align-super text-[13px]">{{ NOTES[item.index][1] }}</small>{{ droneOctave(item.index) }}</button>
             </div>
-            <!-- 两侧使用相同三列尺寸，标签、滑杆和数值保持一致。 -->
-            <div class="mt-4 grid w-full grid-cols-[100px_minmax(0,1fr)_40px] items-center gap-3 text-[12px] text-muted">
+            <!-- 标签与百分比按文字宽度占位，滑杆两侧统一保留相同间距。 -->
+            <div class="mt-4 grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-[12px] text-muted">
               <label class="whitespace-nowrap english:tracking-normal" for="volume">{{ text.volume }}</label>
               <input id="volume" class="volume-range min-w-0" type="range" min="0" max="100" :value="volume" :style="{ '--fill': `${volume}%` }" :aria-label="text.volume" @input="onVolumeInput" />
               <output id="volume-value" class="text-right [font-variant-numeric:tabular-nums]" for="volume">{{ volume }}%</output>
             </div>
-            <div class="wide:group-data-[layout=chromatic]:mt-auto wide:group-data-[layout=chromatic]:pt-3 mt-6 border-t border-line pt-4 text-[11px] tracking-[1px] text-muted wide:mt-[clamp(12px,1.6dvh,20px)] wide:pt-3">{{ text.recording }}</div>
+            <div class="mt-4 shrink-0 border-t border-line pt-3 text-[11px] leading-5 tracking-[1px] text-muted">{{ text.recording }}</div>
           </div>
       </div>
       <div class="contents wide:flex wide:h-full wide:self-stretch wide:min-h-0 wide:flex-col wide:gap-6">
@@ -382,7 +382,7 @@ onUnmounted(() => {
           <div class="pointer-events-none absolute inset-[14%] rounded-full border border-gold opacity-[calc(var(--energy)*.26)] transition-opacity duration-300 scale-[calc(.97_+_var(--energy)*.15)] motion-reduce:hidden" aria-hidden="true" /><div class="pointer-events-none absolute inset-[7%] rounded-full border border-gold opacity-[calc(var(--energy)*.12)] transition-opacity duration-300 scale-[calc(.97_+_var(--energy)*.08)] motion-reduce:hidden" aria-hidden="true" />
           <div class="absolute inset-[3%] rounded-full border border-dashed border-[#b8a57528] transition-shadow duration-1000" /><div class="absolute inset-[10%] rounded-full border border-[#b8a5753b] transition-shadow duration-1000 group-data-[playing=true]:animate-turn before:absolute before:-top-[3px] before:left-1/2 before:h-1.5 before:w-1.5 before:rounded-full before:bg-gold before:shadow-[0_0_15px_#dfbd8177] before:content-[''] after:absolute after:bottom-[-3px] after:left-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-gold after:shadow-[0_0_15px_#dfbd8177] after:content-[''] mobile:before:hidden" /><div class="absolute inset-[17%] rounded-full border border-[#b8a57518] transition-shadow duration-1000 group-data-[playing=true]:opacity-[calc(.4_+_var(--energy)*.6)] group-data-[playing=true]:shadow-[0_0_35px_#dfbd810c,inset_0_0_35px_#dfbd810c] group-hover/scene:border-[#dfbd8155]" />
           <!-- 字间距在末字后也占位，把视觉文字推左半个字距；用相对位移回正到中心竖轴。 -->
-          <div class="circle-compact:hidden absolute left-1/2 top-[8%] -translate-x-1/2 bg-bg px-[15px] py-2 text-[11px] tracking-[5px] text-muted mobile:hidden"><span class="relative left-[2.5px] english:tracking-normal">{{ text.resonance }}</span></div><div class="circle-compact:hidden absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap bg-bg px-[15px] py-2 text-[11px] tracking-[3px] text-muted"><span class="relative left-[1.5px]">Pa · Sa · Sa · Sa</span></div>
+          <!-- 移除与当前主音重复的共鸣标签，保持琴弦和圆环连续。 --><div class="circle-compact:hidden absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap bg-bg px-[15px] py-2 text-[11px] tracking-[3px] text-muted"><span class="relative left-[1.5px]">Pa · Sa · Sa · Sa</span></div>
           <svg class="absolute inset-0 h-full w-full opacity-[.36] transition-[opacity,filter] duration-700 group-data-[playing=true]:opacity-[calc(.42_+_var(--energy)*.55)] group-data-[playing=true]:drop-shadow-[0_0_5px_#dfbd8166] group-hover/scene:opacity-[.8]" viewBox="0 0 600 600" aria-hidden="true">
             <defs><linearGradient id="thread"><stop stop-color="#c5a46b" stop-opacity="0" /><stop offset=".5" stop-color="#e8c78c" /><stop offset="1" stop-color="#c5a46b" stop-opacity="0" /></linearGradient></defs>
             <g fill="none" stroke="url(#thread)">
@@ -403,23 +403,23 @@ onUnmounted(() => {
         </div>
         <!-- 左右装饰使用等宽槽位，让提示文字在暂停和播放时都保持中心不变。 -->
         <div class="-mt-1.5 grid min-h-5 w-full shrink-0 grid-cols-[24px_auto_24px] items-center justify-center gap-3 text-[13px] tracking-[2px] text-muted group-data-[playing=true]:text-[#c8cdbb] mobile:text-[12px]" role="status"><span class="h-[5px] w-[5px] justify-self-center rounded-full bg-[#778179] group-data-[playing=true]:bg-gold" /><span class="relative left-[1px]">{{ status }}</span><span class="flex h-4 items-center gap-[3px] justify-self-center opacity-0 group-data-[playing=true]:opacity-100" aria-hidden="true"><i class="block h-2.5 w-[3px] bg-gold group-data-[playing=true]:h-3 group-data-[playing=true]:origin-center group-data-[playing=true]:scale-y-[calc(.2_+_var(--energy)*.8)] group-data-[playing=true]:transition-transform group-data-[playing=true]:duration-100" /><i class="block h-2.5 w-[3px] bg-gold group-data-[playing=true]:h-4 group-data-[playing=true]:origin-center group-data-[playing=true]:scale-y-[calc(.2_+_var(--energy)*.8)] group-data-[playing=true]:transition-transform group-data-[playing=true]:duration-100" /><i class="block h-2.5 w-[3px] bg-gold group-data-[playing=true]:h-[9px] group-data-[playing=true]:origin-center group-data-[playing=true]:scale-y-[calc(.2_+_var(--energy)*.8)] group-data-[playing=true]:transition-transform group-data-[playing=true]:duration-100" /><i class="block h-2.5 w-[3px] bg-gold group-data-[playing=true]:h-[13px] group-data-[playing=true]:origin-center group-data-[playing=true]:scale-y-[calc(.2_+_var(--energy)*.8)] group-data-[playing=true]:transition-transform group-data-[playing=true]:duration-100" /></span></div>
-      </section><div class="order-4 col-span-full mt-[34px] mobile:mt-7 wide:order-none wide:mt-0 wide:shrink-0 wide:h-[clamp(320px,32dvh,360px)] wide:flex wide:flex-col min-w-0 rounded-xl border border-line bg-surface px-[30px] pb-5 pt-[27px] mobile:px-4 mobile:pb-4 mobile:pt-5 wide:p-[clamp(16px,2.2dvh,28px)]">
-            <div class="wide:h-16 wide:shrink-0 wide:flex-nowrap mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      </section><div class="order-4 col-span-full mt-[34px] mobile:mt-7 wide:order-none wide:mt-0 wide:shrink-0 wide:min-h-[clamp(320px,32dvh,360px)] min-[1440px]:wide:min-h-[calc(2*clamp(48px,5dvh,64px)+141px+2*clamp(16px,2.2dvh,28px))] wide:flex wide:flex-col min-w-0 rounded-xl border border-line bg-surface px-[30px] pb-5 pt-[27px] mobile:px-4 mobile:pb-4 mobile:pt-5 wide:p-[clamp(16px,2.2dvh,28px)]">
+            <div class="wide:h-12 min-[1440px]:wide:h-8 wide:shrink-0 wide:flex-nowrap mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <h2 class="m-0 text-[14px] font-medium tracking-[2px] english:tracking-normal">{{ text.synth }}</h2>
               <div class="flex flex-wrap items-center gap-2">
                 <label class="flex items-center gap-1.5 text-[11px] tracking-[1px] text-muted english:tracking-normal">{{ text.range }}
-                  <select class="rounded-[6px] border border-line bg-[#1c251f] px-2 py-1 text-[11px] tracking-normal text-ink" :value="synthRange" :aria-label="text.octave" @change="setSynthRange">
+                  <select class="h-8 rounded-[6px] border border-line bg-[#1c251f] px-2 py-0 text-[11px] tracking-normal text-ink" :value="synthRange" :aria-label="text.octave" @change="setSynthRange">
                     <option v-for="base in SYNTH_RANGES" :key="base" :value="base">{{ rangeLabel(base) }}</option>
                   </select>
                 </label>
                 <label class="flex items-center gap-1.5 text-[11px] text-muted">{{ text.transpose }}
-                  <select class="rounded-[6px] border border-line bg-[#1c251f] px-2 py-1 text-[11px] text-ink" :value="synthTranspose" :aria-label="text.transpose" @change="setSynthTranspose">
+                  <select class="h-8 rounded-[6px] border border-line bg-[#1c251f] px-2 py-0 text-[11px] text-ink" :value="synthTranspose" :aria-label="text.transpose" @change="setSynthTranspose">
                     <option v-for="offset in 25" :key="offset" :value="offset - 13">{{ offset > 13 ? '+' : '' }}{{ offset - 13 }}</option>
                   </select>
                 </label>
-                <div class="flex rounded-full border border-line p-[3px]" role="group" :aria-label="text.mode">
-                  <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors english:tracking-normal" :class="synthMode === 'latch' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'latch'" @click="setSynthMode('latch')">{{ text.latch }}</button>
-                  <button type="button" class="rounded-full px-3 py-[5px] text-[11px] tracking-[1px] transition-colors english:tracking-normal" :class="synthMode === 'hold' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'hold'" @click="setSynthMode('hold')">{{ text.hold }}</button>
+                <div class="flex h-8 items-center rounded-full border border-line p-[3px]" role="group" :aria-label="text.mode">
+                  <button type="button" class="h-6 rounded-full px-3 py-0 text-[11px] tracking-[1px] transition-colors english:tracking-normal" :class="synthMode === 'latch' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'latch'" @click="setSynthMode('latch')">{{ text.latch }}</button>
+                  <button type="button" class="h-6 rounded-full px-3 py-0 text-[11px] tracking-[1px] transition-colors english:tracking-normal" :class="synthMode === 'hold' ? 'bg-gold text-bg' : 'text-muted hover:text-ink'" :aria-pressed="synthMode === 'hold'" @click="setSynthMode('hold')">{{ text.hold }}</button>
                 </div>
               </div>
             </div>
@@ -433,12 +433,13 @@ onUnmounted(() => {
               <button v-for="key in blackKeys" :key="key.midi" type="button" class="absolute top-0 z-[1] h-[60%] w-[4.1%] -translate-x-1/2 rounded-b-[4px] bg-[#1a231d] shadow-[0_3px_6px_#00000066] transition-colors duration-100 before:absolute before:-inset-x-1.5 before:inset-y-0 before:content-[''] hover:bg-[#2b382f] focus-visible:z-[2] aria-pressed:bg-gold" :style="{ left: `${key.left}%` }" :aria-label="t('synthNote', { note: soundingLabel(key.midi) })" :aria-pressed="activeNotes.has(key.midi)" @click="pressNote(key.midi)" @pointerdown="holdNote($event, key.midi)" @pointerup="releaseNote(key.midi)" @pointerleave="releaseNote(key.midi)" @pointercancel="releaseNote(key.midi)" @keydown.enter="keyHold($event, key.midi)" @keydown.space="keyHold($event, key.midi)" @keyup.enter="keyRelease($event, key.midi)" @keyup.space="keyRelease($event, key.midi)" />
               </div>
             </div>
-            <div class="mt-4 grid w-full grid-cols-[100px_minmax(0,1fr)_40px] items-center gap-3 text-[12px] text-muted">
-              <label class="whitespace-nowrap english:tracking-normal" for="synth-volume">{{ text.synthVolume }}</label>
+            <div class="mt-4 grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-[12px] text-muted">
+              <!-- 卡片标题已区分音源，统一可见标签才能让文字到滑杆的留白一致。 -->
+              <label class="whitespace-nowrap english:tracking-normal" for="synth-volume">{{ text.volume }}</label>
               <input id="synth-volume" class="volume-range min-w-0" type="range" min="0" max="100" :value="synthVolume" :style="{ '--fill': `${synthVolume}%` }" :aria-label="text.synthVolume" @input="onSynthVolumeInput" />
               <output class="text-right [font-variant-numeric:tabular-nums]" for="synth-volume">{{ synthVolume }}%</output>
             </div>
-            <div class="wide:mt-auto wide:pt-3 mt-6 border-t border-line pt-4 text-[11px] tracking-[1px] text-muted wide:mt-[clamp(12px,1.6dvh,20px)] wide:pt-3">{{ t('shortcuts', { note: topNote }) }}</div>
+            <div class="mt-4 shrink-0 border-t border-line pt-3 text-[11px] leading-5 tracking-[1px] text-muted">{{ t('shortcuts', { note: topNote }) }}</div>
           </div>
       </div>
 
