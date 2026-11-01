@@ -87,11 +87,6 @@ export class Synth {
     return true;
   }
 
-  isActive(midi) {
-    const voice = this.voices.get(midi);
-    return !!voice && !voice.releasing;
-  }
-
   stop() {
     for (const midi of [...this.voices.keys()]) this.noteOff(midi);
   }

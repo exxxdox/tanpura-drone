@@ -126,7 +126,6 @@ test('松开按键淡出后停止并清理声部', t => {
   assert.equal(voice.releasing, true);
   assert.equal(voice.gain.gain.value, .0001);
   assert.ok(voice.oscillators.every(oscillator => oscillator.stopped));
-  assert.equal(synth.isActive(36), false);
   assert.equal(synth.noteOff(36), false);
   assert.equal(synth.noteOff(60), false);
 });
@@ -134,9 +133,11 @@ test('松开按键淡出后停止并清理声部', t => {
 test('同音重新按下会替换仍在淡出的旧声部', t => {
   const { synth, created } = setup(t);
   synth.noteOn(24);
+  const oldVoice = synth.voices.get(24);
   synth.noteOff(24);
   assert.equal(synth.noteOn(24), true);
-  assert.equal(synth.isActive(24), true);
+  assert.notEqual(synth.voices.get(24), oldVoice);
+  assert.ok(!synth.voices.get(24).releasing);
   assert.equal(created.oscillators.length, 4);
 });
 

@@ -111,7 +111,8 @@ export class Drone {
   }
 
   getEnergy() {
-    if (!this.running || !this.analyser || this.volume === 0) return 0;
+    // 合成器独立音量也接入同一 analyser；静音 Tanpura 不能把总线能量清零。
+    if (!this.running || !this.analyser) return 0;
     this.analyser.getFloatTimeDomainData(this.samples);
     let squares = 0;
     for (const sample of this.samples) squares += sample * sample;
