@@ -27,7 +27,7 @@
 
 将源码、`pnpm-lock.yaml` 和 `public/audio/` 提交到 GitHub；`outputs/`、`node_modules/`、`dist/`、`.vercel/` 和本地环境变量文件不提交。
 
-在 Vercel 导入 GitHub 仓库，项目根目录保持仓库根目录。项目使用 Vite，构建命令为 `pnpm build`，输出目录为 `dist`，已写入 `vercel.json`。安装依赖时使用 pnpm 和锁文件；本项目不需要 API key 或运行时环境变量。
+在 Vercel 导入 GitHub 仓库，项目根目录保持仓库根目录。项目使用 Vite，构建命令为 `pnpm build`，输出目录为 `dist`，由 Vercel 自动识别；`vercel.json` 只保留音频缓存响应头。安装依赖时使用 pnpm 和锁文件；本项目不需要 API key 或运行时环境变量。
 
 Vercel 依据 `pnpm-lock.yaml` 识别 pnpm；`package.json` 用 `packageManager` 固定为 `pnpm@11.18.0`。若 Vercel 未按该版本执行构建，在项目环境变量中开启 `ENABLE_EXPERIMENTAL_COREPACK=1`。详见 [Vercel 包管理器说明](https://vercel.com/docs/package-managers)。
 
